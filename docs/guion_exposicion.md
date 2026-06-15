@@ -5,7 +5,7 @@
 > En el Avance 1 definimos el problema de negocio y un modelo estrella para
 > analizar las colocaciones de creditos Mivivienda 2024. En este segundo
 > avance implementamos fisicamente el Datamart en MySQL, desarrollamos el ETL
-> con Python y construimos un dashboard con Streamlit.
+> con Python y construimos un dashboard web con Flask, HTML, CSS y JavaScript.
 
 ## 2. Arquitectura
 
@@ -235,36 +235,114 @@ Modos disponibles:
 > La separacion por modulos facilita las pruebas, el mantenimiento y la
 > identificacion de cada etapa ETL.
 
-### 5.7 `dashboard/app.py`
+### 5.7 `web/app.py`
 
-> Este archivo implementa la capa de visualizacion. Streamlit consulta la
-> vista `vw_creditos_analitica`, calcula los indicadores y construye los
-> graficos interactivos con Plotly.
+> Este archivo es el backend web en Python. Cumple una funcion parecida a un
+> controlador de Spring Boot: sirve la pagina principal y expone endpoints
+> REST que devuelven datos en formato JSON.
 
-Elementos importantes:
+Rutas principales:
 
-- `load_data()` consulta la vista analitica de MySQL.
-- `st.cache_data()` evita consultar la base en cada interaccion.
-- La barra lateral contiene filtros de departamento, producto y tipo de IFI.
-- Las tarjetas muestran cantidad, monto total, promedio y tasa promedio.
-- Los graficos presentan evolucion mensual, producto, departamento e IFI.
+```python
+@app.get("/")
+def index():
+    return render_template("index.html")
+
+@app.get("/api/dashboard")
+def dashboard():
+    return jsonify(service.get_dashboard(filters))
+```
+
+- `/` devuelve el HTML del dashboard.
+- `/api/health` verifica la conexion con MySQL.
+- `/api/filtros` devuelve departamentos, productos y tipos de IFI.
+- `/api/dashboard` devuelve KPIs, graficos y registros.
+
+> Flask reemplaza la capa de controladores que normalmente se implementaria
+> con Spring Boot. Todo se ejecuta en un solo proceso Python.
+
+### 5.8 `web/services/dashboard_service.py`
+
+> Este archivo contiene la logica de consultas y cumple una funcion similar a
+> una clase `Service` o `Repository` de Spring Boot.
+
+Responsabilidades:
+
+- Construir condiciones SQL a partir de los filtros.
+- Ejecutar consultas parametrizadas con SQLAlchemy.
+- Calcular KPIs generales.
+- Obtener datos mensuales, productos, departamentos e IFI.
+- Convertir fechas y valores decimales a JSON.
 
 Fragmento que se puede mostrar:
 
 ```python
-@st.cache_data(ttl=300)
-def load_data() -> pd.DataFrame:
-    return pd.read_sql(
-        "SELECT * FROM vw_creditos_analitica",
-        get_engine(),
-    )
+clauses.append(f"{column} = :{key}")
+params[key] = value
 ```
 
-> El dashboard no consulta directamente el CSV. Consume el Datamart ya
-> transformado, lo cual demuestra que la visualizacion es la ultima capa del
-> flujo de Inteligencia de Negocios.
+> Los valores no se concatenan directamente en el SQL. Se envian como
+> parametros, lo que hace las consultas mas seguras.
 
-### 5.8 `tests/test_transform.py`
+### 5.9 `web/templates/index.html`
+
+> Es la estructura visual de la pagina. Contiene el menu lateral, los filtros,
+> las tarjetas KPI, los espacios para graficos y la tabla de detalle.
+
+Flask usa Jinja para resolver las rutas de archivos estaticos:
+
+```html
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/styles.css') }}"
+>
+```
+
+> El HTML no contiene datos escritos manualmente. JavaScript los solicita al
+> backend y actualiza la pagina.
+
+### 5.10 `web/static/js/dashboard.js`
+
+> Este archivo consume las APIs Flask mediante `fetch`, de la misma forma que
+> un componente Angular consumiria un controlador REST.
+
+Ejemplo:
+
+```javascript
+const response = await fetch(`/api/dashboard?${params.toString()}`);
+const data = await response.json();
+updateKpis(data.kpis);
+updateCharts(data);
+updateTable(data.detalle);
+```
+
+Flujo del filtro:
+
+1. El usuario selecciona departamento, producto o tipo de IFI.
+2. JavaScript crea los parametros de la URL.
+3. `fetch` llama a `/api/dashboard`.
+4. Flask consulta MySQL.
+5. La API devuelve JSON.
+6. JavaScript actualiza tarjetas, graficos y tabla.
+
+Chart.js se utiliza para construir los graficos de linea, dona y barras.
+
+### 5.11 `web/static/css/styles.css`
+
+> Este archivo controla completamente el diseno: colores, menu lateral,
+> tarjetas, tablas, responsive y estados de carga.
+
+> A diferencia de Streamlit, esta arquitectura permite modificar directamente
+> HTML, CSS y JavaScript sin necesitar Angular ni un servidor frontend
+> separado.
+
+### 5.12 `dashboard/app.py`
+
+> Esta es la version inicial hecha con Streamlit. Se conserva como alternativa
+> y como comparacion tecnica, pero el dashboard principal para la exposicion
+> es la aplicacion Flask ubicada en `web`.
+
+### 5.13 `tests/test_transform.py` y `tests/test_web_api.py`
 
 > Este archivo contiene pruebas unitarias para comprobar las reglas de
 > transformacion antes de ejecutar una carga real.
@@ -276,6 +354,9 @@ Pruebas implementadas:
 - Los textos deben quedar normalizados.
 - El hash debe tener 64 caracteres.
 - Un monto negativo debe considerarse invalido.
+- La pagina principal debe responder correctamente.
+- La API debe conectarse a MySQL.
+- Los filtros de API deben devolver solo los registros solicitados.
 
 Comando:
 
@@ -286,7 +367,7 @@ Comando:
 > Las pruebas separan la validacion del codigo de la validacion de los datos
 > almacenados en MySQL.
 
-### 5.9 Resumen del flujo entre archivos
+### 5.14 Resumen del flujo entre archivos
 
 ```text
 setup_database.py
@@ -300,16 +381,30 @@ extract.py -> transform.py -> load.py      |
         |                   |              |
         +------ main.py ----+              |
                                            |
-MySQL -> vw_creditos_analitica -> dashboard/app.py
+MySQL -> vw_creditos_analitica
+                    |
+                    v
+        dashboard_service.py
+                    |
+                    v
+               web/app.py
+               /       \
+              v         v
+        API JSON     index.html
+                         |
+                         v
+                 dashboard.js + styles.css
 
 tests/test_transform.py -> verifica transform.py
+tests/test_web_api.py -> verifica Flask, API y filtros
 ```
 
 Frase de cierre de la explicacion tecnica:
 
-> El codigo aplica separacion de responsabilidades. Cada archivo se concentra
-> en una etapa concreta, mientras `main.py` coordina todo el proceso. Esto
-> hace que el ETL sea repetible, comprobable y facil de mantener.
+> El codigo aplica separacion de responsabilidades. `main.py` coordina el ETL,
+> Flask funciona como backend, el servicio consulta MySQL y JavaScript consume
+> las APIs. Es una arquitectura web similar a Spring Boot, pero implementada
+> completamente con Python en un solo proyecto.
 
 ## 6. Carga incremental
 
@@ -363,7 +458,7 @@ Hallazgos para comentar:
 Abrir:
 
 ```text
-http://localhost:8501
+http://localhost:5000
 ```
 
 Demostrar:

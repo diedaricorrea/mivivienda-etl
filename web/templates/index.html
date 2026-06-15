@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BI Mivivienda 2024</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">MV</div>
+                <div>
+                    <span class="brand-overline">DATAMART</span>
+                    <strong>Mivivienda BI</strong>
+                </div>
+            </div>
+
+            <nav class="nav-list" aria-label="Navegacion principal">
+                <a class="nav-item active" href="#resumen">Resumen</a>
+                <a class="nav-item" href="#analisis">Analisis</a>
+                <a class="nav-item" href="#detalle">Detalle</a>
+            </nav>
+
+            <section class="filters">
+                <div class="section-heading">
+                    <span>Filtros</span>
+                    <button id="clear-filters" class="text-button" type="button">
+                        Limpiar
+                    </button>
+                </div>
+
+                <label>
+                    Departamento
+                    <select id="departamento">
+                        <option value="">Todos</option>
+                    </select>
+                </label>
+
+                <label>
+                    Producto
+                    <select id="producto">
+                        <option value="">Todos</option>
+                    </select>
+                </label>
+
+                <label>
+                    Tipo de IFI
+                    <select id="tipo_ifi">
+                        <option value="">Todos</option>
+                    </select>
+                </label>
+
+                <button id="apply-filters" class="primary-button" type="button">
+                    Aplicar filtros
+                </button>
+            </section>
+
+            <div class="database-status">
+                <span id="status-dot" class="status-dot"></span>
+                <div>
+                    <small>Estado de datos</small>
+                    <strong id="status-text">Conectando...</strong>
+                </div>
+            </div>
+        </aside>
+
+        <main class="content">
+            <header class="topbar" id="resumen">
+                <div>
+                    <span class="eyebrow">INTELIGENCIA DE NEGOCIOS</span>
+                    <h1>Colocaciones Mivivienda 2024</h1>
+                    <p>
+                        Indicadores consolidados desde el DataMart de creditos
+                        desembolsados.
+                    </p>
+                </div>
+                <div class="header-badge">
+                    <span>Periodo</span>
+                    <strong>Ene - Dic 2024</strong>
+                </div>
+            </header>
+
+            <section class="kpi-grid" aria-label="Indicadores principales">
+                <article class="kpi-card">
+                    <span class="kpi-label">Cantidad de creditos</span>
+                    <strong id="kpi-cantidad" class="kpi-value">--</strong>
+                    <span class="kpi-note">Operaciones desembolsadas</span>
+                </article>
+                <article class="kpi-card">
+                    <span class="kpi-label">Monto total</span>
+                    <strong id="kpi-total" class="kpi-value kpi-value-money">--</strong>
+                    <span class="kpi-note">Capital colocado</span>
+                </article>
+                <article class="kpi-card">
+                    <span class="kpi-label">Monto promedio</span>
+                    <strong id="kpi-promedio" class="kpi-value kpi-value-money">--</strong>
+                    <span class="kpi-note">Por cada credito</span>
+                </article>
+                <article class="kpi-card accent-card">
+                    <span class="kpi-label">Tasa promedio</span>
+                    <strong id="kpi-tasa" class="kpi-value">--</strong>
+                    <span class="kpi-note">Promedio del periodo</span>
+                </article>
+            </section>
+
+            <section id="analisis" class="dashboard-grid">
+                <article class="panel panel-wide">
+                    <div class="panel-header">
+                        <div>
+                            <span class="panel-kicker">TENDENCIA</span>
+                            <h2>Monto colocado por mes</h2>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-line">
+                        <canvas id="monthly-chart"></canvas>
+                    </div>
+                </article>
+
+                <article class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <span class="panel-kicker">DISTRIBUCION</span>
+                            <h2>Participacion por producto</h2>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-doughnut">
+                        <canvas id="product-chart"></canvas>
+                    </div>
+                </article>
+
+                <article class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <span class="panel-kicker">GEOGRAFIA</span>
+                            <h2>Top departamentos</h2>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="department-chart"></canvas>
+                    </div>
+                </article>
+
+                <article class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <span class="panel-kicker">INSTITUCIONES</span>
+                            <h2>Top IFI por monto</h2>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="ifi-chart"></canvas>
+                    </div>
+                </article>
+            </section>
+
+            <section id="detalle" class="panel detail-panel">
+                <div class="panel-header">
+                    <div>
+                        <span class="panel-kicker">REGISTROS</span>
+                        <h2>Detalle analitico</h2>
+                    </div>
+                    <span class="table-note">Ultimos 100 registros</span>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Producto</th>
+                                <th>Departamento</th>
+                                <th>Distrito</th>
+                                <th>IFI</th>
+                                <th>Plazo</th>
+                                <th>Monto</th>
+                                <th>Tasa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detail-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div id="loading" class="loading-overlay" aria-live="polite">
+                <div class="loader"></div>
+                <span>Consultando DataMart...</span>
+            </div>
+
+            <div id="error-toast" class="toast" role="alert"></div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

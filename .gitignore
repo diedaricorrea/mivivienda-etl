@@ -3,4 +3,7 @@
 __pycache__/
 *.py[cod]
 .streamlit/
-
+~$*
+*.inspect.ndjson
+docs/render_apa/
+docs/render_avance2/
