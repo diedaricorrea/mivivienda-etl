@@ -1,5 +1,3 @@
-USE dm_mivivienda;
-
 -- 1. Conteos de la ultima ejecucion ETL.
 SELECT *
 FROM etl_ejecucion
@@ -69,4 +67,3 @@ SELECT
     MIN(plazo_meses) AS plazo_minimo,
     MAX(plazo_meses) AS plazo_maximo
 FROM vw_creditos_analitica;
-

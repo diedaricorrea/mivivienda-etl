@@ -1,5 +1,3 @@
-USE dm_mivivienda;
-
 -- KPI 1: monto total y cantidad por mes.
 SELECT
     mes_numero,
@@ -56,4 +54,3 @@ SELECT
 FROM vw_creditos_analitica
 GROUP BY categoria_plazo
 ORDER BY MIN(plazo_meses);
-

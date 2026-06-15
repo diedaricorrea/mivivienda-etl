@@ -1,5 +1,3 @@
-USE dm_mivivienda;
-
 CREATE TABLE IF NOT EXISTS stg_colocaciones_mivivienda (
     id_staging              BIGINT AUTO_INCREMENT PRIMARY KEY,
     fecha_desembolso        DATE NOT NULL,

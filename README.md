@@ -42,12 +42,10 @@ pip install -r requirements.txt
 
 2. Copiar `.env.example` como `.env` y configurar MySQL.
 
-3. Ejecutar en MySQL, en este orden:
+3. Crear la base y todas las tablas usando el nombre configurado en `.env`:
 
-```text
-sql/00_crear_base.sql
-sql/01_staging.sql
-sql/02_datamart.sql
+```powershell
+python -m etl.setup_database
 ```
 
 ## ETL
@@ -90,11 +88,14 @@ sql/04_consultas_kpi.sql
 ## Dashboard
 
 ```powershell
-streamlit run dashboard/app.py
+.\.venv\Scripts\streamlit.exe run dashboard/app.py
 ```
 
 El dashboard consume la vista `vw_creditos_analitica` e incluye filtros por
 departamento, producto y tipo de IFI.
+
+El guion sugerido para la demostracion se encuentra en
+`docs/guion_exposicion.md`.
 
 ## Evidencias sugeridas
 
@@ -105,4 +106,3 @@ departamento, producto y tipo de IFI.
 5. Resultado de las consultas de `03_validaciones.sql`.
 6. Resultado de los KPIs de `04_consultas_kpi.sql`.
 7. Capturas del dashboard con sus filtros y graficos.
-

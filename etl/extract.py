@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import pandas as pd
+import pandas as pd # Mira para q entiendas, pandas = libreria de python para traabajar con datos en forma de tablas.
 
 from .conexion import CSV_PATH
 
@@ -22,7 +22,7 @@ EXPECTED_COLUMNS = [
     "FECHA_CORTE",
 ]
 
-
+# Mano esto es para que lea el csv y valide que tenga las columnas esperadas y devolverlo como un dataFrame de pandas
 def extract_colocaciones(csv_path: str | Path | None = None) -> pd.DataFrame:
     path = Path(csv_path) if csv_path else CSV_PATH
     if not path.exists():

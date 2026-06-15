@@ -1,5 +1,3 @@
-USE dm_mivivienda;
-
 CREATE TABLE IF NOT EXISTS dim_tiempo (
     id_tiempo          INT AUTO_INCREMENT PRIMARY KEY,
     fecha_desembolso   DATE NOT NULL,
