@@ -23,107 +23,12 @@
 </head>
 <body>
     <div class="app-shell">
-        <aside class="sidebar">
-            <div class="brand">
-                <div class="brand-mark" aria-hidden="true">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                        <path d="M4 18V8.5L12 4l8 4.5V18l-8 4-8-4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                        <path d="M12 12v10M4 8.5l8 3.5 8-3.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-                <strong>Mivivienda</strong>
-            </div>
-
-            <nav class="nav-list" aria-label="Navegacion principal">
-                <a class="nav-item active" href="#resumen">
-                    <span class="nav-icon" aria-hidden="true">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-                    </span>
-                    Resumen
-                </a>
-                <a class="nav-item" href="#tendencias">
-                    <span class="nav-icon" aria-hidden="true">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 19h16M6 16l4-5 3 3 5-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </span>
-                    Tendencias
-                </a>
-                <a class="nav-item" href="#mapa">
-                    <span class="nav-icon" aria-hidden="true">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 4.5 3 7v12.5l6-2.5 6 2.5 6-2.5V4.5L15 7 9 4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 4.5V17M15 7v12.5" stroke="currentColor" stroke-width="1.8"/></svg>
-                    </span>
-                    Mapa
-                </a>
-                <a class="nav-item" href="#analisis">
-                    <span class="nav-icon" aria-hidden="true">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 19V9M12 19V5M19 19v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-                    </span>
-                    Analisis
-                </a>
-                <a class="nav-item" href="#detalle">
-                    <span class="nav-icon" aria-hidden="true">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M7 7h10M7 12h10M7 17h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="3.5" y="3.5" width="17" height="17" rx="3" stroke="currentColor" stroke-width="1.8"/></svg>
-                    </span>
-                    Detalle
-                </a>
-            </nav>
-
-            <section class="filters">
-                <div class="section-heading">
-                    <span>Filtros</span>
-                    <button id="clear-filters" class="text-button" type="button">
-                        Limpiar
-                    </button>
-                </div>
-
-                <label>
-                    Departamento
-                    <select id="departamento">
-                        <option value="">Todos</option>
-                    </select>
-                </label>
-
-                <label>
-                    Producto
-                    <select id="producto">
-                        <option value="">Todos</option>
-                    </select>
-                </label>
-
-                <label>
-                    Tipo de IFI
-                    <select id="tipo_ifi">
-                        <option value="">Todos</option>
-                    </select>
-                </label>
-
-                <button id="apply-filters" class="primary-button" type="button">
-                    Aplicar filtros
-                </button>
-            </section>
-
-            <div class="sidebar-cta">
-                <strong>DataMart 2024</strong>
-                <p>Modelo estrella con 9,336 creditos colocados.</p>
-                <div class="database-status">
-                    <span id="status-dot" class="status-dot"></span>
-                    <div>
-                        <small>Estado de datos</small>
-                        <strong id="status-text">Conectando...</strong>
-                    </div>
-                </div>
-            </div>
-        </aside>
+        {% set active_page = 'dashboard' %}
+        {% include 'partials/sidebar.html' %}
 
         <main class="content">
-            <header class="topbar" id="resumen">
+            <header class="topbar">
                 <h1>Dashboard</h1>
-                <div class="topbar-search" role="search">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/>
-                        <path d="m16 16 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                    </svg>
-                    <input type="search" placeholder="Buscar en el tablero..." disabled aria-disabled="true">
-                </div>
                 <div class="topbar-actions">
                     <button
                         id="theme-toggle"
@@ -141,14 +46,34 @@
                 </div>
             </header>
 
-            <section class="dashboard-row row-summary">
-                <article class="panel panel-sales">
+            <section id="resumen" class="dashboard-row row-hero" aria-label="Resumen y mapa">
+                <article class="panel panel-kpis">
                     <div class="panel-header">
                         <div>
                             <h2>Colocaciones del periodo</h2>
                             <p class="panel-sub">Resumen</p>
                         </div>
-                        <span class="chip-outline">Exportar</span>
+                        <div class="export-menu">
+                            <button
+                                id="export-toggle"
+                                class="chip-outline"
+                                type="button"
+                                aria-haspopup="true"
+                                aria-expanded="false"
+                            >
+                                Exportar
+                            </button>
+                            <div id="export-options" class="export-options" hidden>
+                                <button id="export-excel" type="button">
+                                    Excel (.xlsx)
+                                    <small>KPIs, series y detalle</small>
+                                </button>
+                                <button id="export-csv" type="button">
+                                    CSV detalle
+                                    <small>Registros filtrados</small>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     <div class="kpi-grid" aria-label="Indicadores principales">
                         <article class="kpi-tile kpi-pink">
@@ -175,8 +100,6 @@
                             <span class="kpi-label">Tasa promedio</span>
                             <span class="kpi-note">Promedio del periodo</span>
                         </article>
-                    </div>
-                    <div class="kpi-grid kpi-grid-secondary" aria-label="Indicadores secundarios">
                         <article class="kpi-tile kpi-mint">
                             <strong id="kpi-crecimiento" class="kpi-value">--</strong>
                             <span class="kpi-label">Crecimiento mensual</span>
@@ -200,7 +123,21 @@
                     </div>
                 </article>
 
-                <article class="panel" id="tendencias">
+                <article id="mapa" class="panel panel-map">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Colocaciones por departamento</h2>
+                            <p class="panel-sub">Mapa geografico</p>
+                        </div>
+                        <span class="panel-hint">Coropleta por monto</span>
+                    </div>
+                    <div id="peru-map" class="map-container" aria-label="Mapa de Peru"></div>
+                    <div id="map-legend" class="map-legend"></div>
+                </article>
+            </section>
+
+            <section id="tendencias" class="dashboard-row row-trend">
+                <article class="panel">
                     <div class="panel-header">
                         <div>
                             <h2>Tendencia mensual</h2>
@@ -276,17 +213,6 @@
                     </div>
                 </article>
 
-                <article class="panel panel-span-2">
-                    <div class="panel-header">
-                        <div>
-                            <h2>Tasa promedio por producto y tipo de IFI</h2>
-                        </div>
-                    </div>
-                    <div class="chart-container chart-mid">
-                        <canvas id="rate-chart"></canvas>
-                    </div>
-                </article>
-
                 <article class="panel">
                     <div class="panel-header">
                         <div>
@@ -308,19 +234,16 @@
                         <canvas id="ifi-chart"></canvas>
                     </div>
                 </article>
-            </section>
 
-            <section id="mapa" class="map-section">
-                <article class="panel panel-map">
+                <article class="panel">
                     <div class="panel-header">
                         <div>
-                            <h2>Colocaciones por departamento</h2>
-                            <p class="panel-sub">Mapa geografico</p>
+                            <h2>Tasa promedio por producto y tipo de IFI</h2>
                         </div>
-                        <span class="panel-hint">Coropleta por monto</span>
                     </div>
-                    <div id="peru-map" class="map-container" aria-label="Mapa de Peru"></div>
-                    <div id="map-legend" class="map-legend"></div>
+                    <div class="chart-container">
+                        <canvas id="rate-chart"></canvas>
+                    </div>
                 </article>
             </section>
 
@@ -328,7 +251,26 @@
                 <div class="panel-header">
                     <div>
                         <h2>Detalle analitico</h2>
-                        <p class="panel-sub">Ultimos 100 registros</p>
+                        <p id="detalle-subtitle" class="panel-sub">50 registros por pagina</p>
+                    </div>
+                    <div class="pagination" aria-label="Paginacion del detalle">
+                        <button
+                            id="detalle-prev"
+                            class="page-button"
+                            type="button"
+                            disabled
+                        >
+                            Anterior
+                        </button>
+                        <span id="detalle-page-info" class="page-info">Pagina 1</span>
+                        <button
+                            id="detalle-next"
+                            class="page-button"
+                            type="button"
+                            disabled
+                        >
+                            Siguiente
+                        </button>
                     </div>
                 </div>
                 <div class="table-wrapper">

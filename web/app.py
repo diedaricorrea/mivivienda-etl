@@ -1,7 +1,10 @@
+from io import BytesIO, StringIO
 from pathlib import Path
 import sys
+from datetime import datetime
 
-from flask import Flask, jsonify, render_template, request
+import pandas as pd
+from flask import Flask, jsonify, render_template, request, send_file
 from sqlalchemy.exc import SQLAlchemyError
 
 
@@ -13,12 +16,26 @@ from web.services.dashboard_service import DashboardService
 
 
 app = Flask(__name__)
+app.config["TEMPLATES_AUTO_RELOAD"] = True
 service = DashboardService()
+
+
+def _request_filters() -> dict[str, str]:
+    return {
+        "departamento": request.args.get("departamento", "").strip(),
+        "producto": request.args.get("producto", "").strip(),
+        "tipo_ifi": request.args.get("tipo_ifi", "").strip(),
+    }
 
 
 @app.get("/")
 def index():
     return render_template("index.html")
+
+
+@app.get("/proyecto")
+def proyecto():
+    return render_template("proyecto.html")
 
 
 @app.get("/api/health")
@@ -37,12 +54,65 @@ def filters():
 
 @app.get("/api/dashboard")
 def dashboard():
-    filters = {
-        "departamento": request.args.get("departamento", "").strip(),
-        "producto": request.args.get("producto", "").strip(),
-        "tipo_ifi": request.args.get("tipo_ifi", "").strip(),
-    }
-    return jsonify(service.get_dashboard(filters))
+    filters = _request_filters()
+    page = request.args.get("page", 1, type=int) or 1
+    page_size = request.args.get("page_size", 50, type=int) or 50
+    return jsonify(
+        service.get_dashboard(filters, page=page, page_size=page_size)
+    )
+
+
+@app.get("/api/export")
+def export_dashboard():
+    filters = _request_filters()
+    formato = (request.args.get("formato", "xlsx") or "xlsx").lower()
+    payload = service.build_export(filters, formato=formato)
+    stamp = datetime.now().strftime("%Y%m%d_%H%M")
+
+    if formato == "csv":
+        buffer = StringIO()
+        pd.DataFrame(payload["detalle"]).to_csv(buffer, index=False)
+        mem = BytesIO(buffer.getvalue().encode("utf-8-sig"))
+        mem.seek(0)
+        return send_file(
+            mem,
+            as_attachment=True,
+            download_name=f"mivivienda_detalle_{stamp}.csv",
+            mimetype="text/csv",
+        )
+
+    mem = BytesIO()
+    with pd.ExcelWriter(mem, engine="openpyxl") as writer:
+        pd.DataFrame(payload["resumen"]).to_excel(
+            writer, sheet_name="Resumen_KPI", index=False
+        )
+        pd.DataFrame(payload["mensual"]).to_excel(
+            writer, sheet_name="Mensual", index=False
+        )
+        pd.DataFrame(payload["trimestres"]).to_excel(
+            writer, sheet_name="Trimestres", index=False
+        )
+        pd.DataFrame(payload["productos"]).to_excel(
+            writer, sheet_name="Productos", index=False
+        )
+        pd.DataFrame(payload["departamentos"]).to_excel(
+            writer, sheet_name="Departamentos", index=False
+        )
+        pd.DataFrame(payload["instituciones"]).to_excel(
+            writer, sheet_name="Instituciones", index=False
+        )
+        pd.DataFrame(payload["detalle"]).to_excel(
+            writer, sheet_name="Detalle", index=False
+        )
+    mem.seek(0)
+    return send_file(
+        mem,
+        as_attachment=True,
+        download_name=f"mivivienda_dashboard_{stamp}.xlsx",
+        mimetype=(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ),
+    )
 
 
 @app.errorhandler(SQLAlchemyError)

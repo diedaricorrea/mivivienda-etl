@@ -15,6 +15,19 @@ class WebApiTests(unittest.TestCase):
         self.assertIn(b"Mivivienda", response.data)
         self.assertIn(b"Colocaciones del periodo", response.data)
 
+    def test_proyecto_page_renders(self):
+        response = self.client.get("/proyecto")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Exposicion final", response.data)
+        self.assertIn(b"fact_credito", response.data)
+        self.assertIn(b"Modelo estrella del DataMart", response.data)
+        self.assertIn(b"por que se eligieron", response.data)
+        self.assertIn(b"vw_creditos_analitica", response.data)
+        self.assertIn(b"Componentes del DataMart", response.data)
+        self.assertIn(b"16 metricas visuales", response.data)
+        self.assertIn(b"Que consume el dashboard", response.data)
+
     def test_health_connects_to_database(self):
         response = self.client.get("/api/health")
 
@@ -37,6 +50,9 @@ class WebApiTests(unittest.TestCase):
         self.assertTrue(payload["tasas"])
         self.assertTrue(payload["concentracion"])
         self.assertTrue(payload["mapa"])
+        self.assertEqual(payload["detalle_meta"]["page_size"], 50)
+        self.assertLessEqual(len(payload["detalle"]), 50)
+        self.assertGreater(payload["detalle_meta"]["total"], 0)
         self.assertEqual(
             payload["filtros_aplicados"],
             {"departamento": "LIMA", "producto": "NMIV"},
@@ -51,6 +67,16 @@ class WebApiTests(unittest.TestCase):
             payload["concentracion"][0]["nombre"],
             "LIMA",
         )
+
+    def test_export_excel_download(self):
+        response = self.client.get("/api/export?formato=xlsx&departamento=LIMA")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            "spreadsheetml",
+            response.headers.get("Content-Type", ""),
+        )
+        self.assertTrue(response.data.startswith(b"PK"))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,110 @@
+<aside class="sidebar">
+    <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path d="M4 18V8.5L12 4l8 4.5V18l-8 4-8-4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M12 12v10M4 8.5l8 3.5 8-3.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <strong>Mivivienda</strong>
+    </div>
+
+    <nav class="nav-list" aria-label="Navegacion principal">
+        {% if active_page == 'dashboard' %}
+        <a class="nav-item active" href="#resumen">
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+            </span>
+            Resumen
+        </a>
+        <a class="nav-item" href="#tendencias">
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 19h16M6 16l4-5 3 3 5-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            Tendencias
+        </a>
+        <a class="nav-item" href="#mapa">
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 4.5 3 7v12.5l6-2.5 6 2.5 6-2.5V4.5L15 7 9 4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 4.5V17M15 7v12.5" stroke="currentColor" stroke-width="1.8"/></svg>
+            </span>
+            Mapa
+        </a>
+        <a class="nav-item" href="#analisis">
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 19V9M12 19V5M19 19v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </span>
+            Analisis
+        </a>
+        <a class="nav-item" href="#detalle">
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M7 7h10M7 12h10M7 17h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="3.5" y="3.5" width="17" height="17" rx="3" stroke="currentColor" stroke-width="1.8"/></svg>
+            </span>
+            Detalle
+        </a>
+        {% else %}
+        <a class="nav-item" href="{{ url_for('index') }}">
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+            </span>
+            Dashboard
+        </a>
+        {% endif %}
+        <a class="nav-item{% if active_page == 'proyecto' %} active{% endif %}" href="{{ url_for('proyecto') }}">
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.25" stroke="currentColor" stroke-width="1.8"/><path d="M12 10.5V16.5M12 7.75v.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </span>
+            El proyecto
+        </a>
+    </nav>
+
+    {% if active_page == 'dashboard' %}
+    <section class="filters">
+        <div class="section-heading">
+            <span>Filtros</span>
+            <button id="clear-filters" class="text-button" type="button">
+                Limpiar
+            </button>
+        </div>
+
+        <label>
+            Departamento
+            <select id="departamento">
+                <option value="">Todos</option>
+            </select>
+        </label>
+
+        <label>
+            Producto
+            <select id="producto">
+                <option value="">Todos</option>
+            </select>
+        </label>
+
+        <label>
+            Tipo de IFI
+            <select id="tipo_ifi">
+                <option value="">Todos</option>
+            </select>
+        </label>
+
+        <button id="apply-filters" class="primary-button" type="button">
+            Aplicar filtros
+        </button>
+    </section>
+    {% endif %}
+
+    <div class="sidebar-footer">
+        <div class="sidebar-meta">
+            <span class="meta-label">Fuente</span>
+            <strong>DataMart 2024</strong>
+            <p>Modelo estrella · 9,336 creditos</p>
+        </div>
+        <div class="database-status">
+            <span id="status-dot" class="status-dot{% if active_page != 'dashboard' %} connected{% endif %}"></span>
+            <div>
+                <small>Estado de datos</small>
+                <strong id="status-text">{% if active_page == 'dashboard' %}Conectando...{% else %}Documentacion{% endif %}</strong>
+            </div>
+        </div>
+    </div>
+</aside>

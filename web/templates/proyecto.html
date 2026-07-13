@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exposicion final · BI Mivivienda 2024</title>
+    <script>
+        (function () {
+            const saved = localStorage.getItem("mivivienda-theme");
+            const theme = saved === "light" || saved === "dark"
+                ? saved
+                : "light";
+            document.documentElement.setAttribute("data-theme", theme);
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="app-shell">
+        {% set active_page = 'proyecto' %}
+        {% include 'partials/sidebar.html' %}
+
+        <main class="content about-page">
+            <header class="topbar">
+                <div>
+                    <p class="panel-sub" style="margin:0 0 6px">
+                        Curso de Inteligencia de Negocios · Exposicion final
+                    </p>
+                    <h1>Presentacion del proyecto</h1>
+                </div>
+                <div class="topbar-actions">
+                    <button
+                        id="theme-toggle"
+                        class="icon-chip"
+                        type="button"
+                        aria-label="Cambiar tema"
+                    >
+                        <span class="theme-toggle-icon" aria-hidden="true"></span>
+                        <span id="theme-toggle-label">Modo oscuro</span>
+                    </button>
+                    <a class="primary-link" href="{{ url_for('index') }}">Abrir dashboard</a>
+                </div>
+            </header>
+
+            <section class="about-hero panel">
+                <div class="about-hero-grid">
+                    <div>
+                        <h2>Datamart Mivivienda 2024</h2>
+                        <p>
+                            Solucion completa de Inteligencia de Negocios para analizar
+                            las <strong>colocaciones de creditos del Fondo Mivivienda</strong>
+                            con datos publicos del periodo <strong>enero - diciembre 2024</strong>.
+                            Integra modelo dimensional, ETL, DataMart en MySQL y dashboards
+                            analiticos para apoyar la toma de decisiones.
+                        </p>
+                        <div class="about-chips">
+                            <span>Avance 1 · Modelo dimensional</span>
+                            <span>Avance 2 · ETL + DataMart</span>
+                            <span>Avance 3 · BI y visualizacion</span>
+                            <span>9,336 creditos en produccion</span>
+                        </div>
+                    </div>
+                    <div class="about-stat-grid" aria-label="Resultados del DataMart">
+                        <article class="about-stat">
+                            <strong>13,507</strong>
+                            <span>Filas origen</span>
+                        </article>
+                        <article class="about-stat">
+                            <strong>5 dims</strong>
+                            <span>+ 1 tabla de hechos</span>
+                        </article>
+                        <article class="about-stat">
+                            <strong>16</strong>
+                            <span>metricas visuales</span>
+                        </article>
+                        <article class="about-stat about-stat-accent">
+                            <strong>9,336</strong>
+                            <span>Hechos cargados</span>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel about-block">
+                <h2>Resumen de los tres avances</h2>
+                <div class="avance-table-wrap">
+                    <table class="avance-table">
+                        <thead>
+                            <tr>
+                                <th>Avance</th>
+                                <th>Etapa</th>
+                                <th>Resultado principal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Avance 1</td>
+                                <td>Analisis y diseno</td>
+                                <td>Modelo dimensional estrella</td>
+                            </tr>
+                            <tr>
+                                <td>Avance 2</td>
+                                <td>Implementacion ETL</td>
+                                <td>DataMart construido en MySQL</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Avance 3 (final)</strong></td>
+                                <td>BI y visualizacion</td>
+                                <td>Dashboards, KPIs, analisis y sustentacion</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel about-block">
+                <h2>Flujo general del proyecto</h2>
+                <div class="pipeline" aria-label="Flujo del proyecto BI">
+                    <div class="pipeline-step">
+                        <span class="pipeline-num">01</span>
+                        <strong>Fuentes</strong>
+                        <small>CSV Mivivienda 2024</small>
+                    </div>
+                    <span class="pipeline-arrow" aria-hidden="true">→</span>
+                    <div class="pipeline-step">
+                        <span class="pipeline-num">02</span>
+                        <strong>Requerimientos</strong>
+                        <small>Analisis de negocio</small>
+                    </div>
+                    <span class="pipeline-arrow" aria-hidden="true">→</span>
+                    <div class="pipeline-step">
+                        <span class="pipeline-num">03</span>
+                        <strong>Modelo</strong>
+                        <small>Estrella dimensional</small>
+                    </div>
+                    <span class="pipeline-arrow" aria-hidden="true">→</span>
+                    <div class="pipeline-step">
+                        <span class="pipeline-num">04</span>
+                        <strong>ETL</strong>
+                        <small>Python + pandas</small>
+                    </div>
+                    <span class="pipeline-arrow" aria-hidden="true">→</span>
+                    <div class="pipeline-step">
+                        <span class="pipeline-num">05</span>
+                        <strong>DataMart</strong>
+                        <small>MySQL 8</small>
+                    </div>
+                    <span class="pipeline-arrow" aria-hidden="true">→</span>
+                    <div class="pipeline-step">
+                        <span class="pipeline-num">06</span>
+                        <strong>Dashboards</strong>
+                        <small>Flask + Chart.js</small>
+                    </div>
+                    <span class="pipeline-arrow" aria-hidden="true">→</span>
+                    <div class="pipeline-step">
+                        <span class="pipeline-num">07</span>
+                        <strong>Decisiones</strong>
+                        <small>Analisis e insights</small>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel about-block">
+                <div class="panel-header">
+                    <div>
+                        <h2>Avance 1 · Modelo estrella del DataMart</h2>
+                        <p class="panel-sub">
+                            Diseno dimensional implementado en <code>sql/02_datamart.sql</code>
+                            · grano: un credito desembolsado
+                        </p>
+                    </div>
+                </div>
+                <p class="about-lead">
+                    El modelo estrella se definio en el Avance 1 y se materializo en MySQL
+                    en el Avance 2. La <strong>tabla de hechos no es el KPI</strong>:
+                    <code>fact_credito</code> guarda cada credito (medidas + claves foraneas).
+                    Los KPIs del dashboard son <strong>agregaciones</strong> calculadas sobre
+                    esos hechos (y dimensiones) a traves de la vista
+                    <code>vw_creditos_analitica</code>.
+                </p>
+
+                <div class="star-schema" role="img" aria-label="Diagrama del modelo estrella">
+                    <div class="star-dim star-top">
+                        <strong>dim_tiempo</strong>
+                        <ul>
+                            <li>fecha_desembolso</li>
+                            <li>anio · semestre · trimestre</li>
+                            <li>mes_numero · mes_nombre · dia</li>
+                        </ul>
+                    </div>
+                    <div class="star-mid">
+                        <div class="star-dim">
+                            <strong>dim_geografia</strong>
+                            <ul>
+                                <li>ubigeo</li>
+                                <li>departamento · provincia</li>
+                                <li>distrito · region_natural</li>
+                            </ul>
+                        </div>
+                        <div class="star-fact">
+                            <strong>fact_credito</strong>
+                            <ul>
+                                <li>FKs: tiempo · geo · producto · ifi · plazo</li>
+                                <li>monto_credito · monto_cuota_inicial</li>
+                                <li>monto_valor_vivienda · tasa_interes</li>
+                                <li>cantidad_creditos · fecha_corte</li>
+                                <li>record_hash · fecha_carga</li>
+                            </ul>
+                        </div>
+                        <div class="star-dim">
+                            <strong>dim_producto</strong>
+                            <ul>
+                                <li>codigo_producto</li>
+                                <li>nombre_producto</li>
+                                <li>descripcion · tipo_beneficiario</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="star-bottom">
+                        <div class="star-dim">
+                            <strong>dim_ifi</strong>
+                            <ul>
+                                <li>nombre_ifi · tipo_ifi</li>
+                                <li>categoria · regulador (SBS)</li>
+                            </ul>
+                        </div>
+                        <div class="star-dim">
+                            <strong>dim_plazo</strong>
+                            <ul>
+                                <li>plazo_meses · plazo_anios</li>
+                                <li>rango_plazo · categoria_plazo</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="schema-note">
+                    <p>
+                        Tambien: <code>stg_colocaciones_mivivienda</code> (staging),
+                        <code>etl_ejecucion</code> (auditoria) y
+                        <code>vw_creditos_analitica</code> (hechos + dims unidos para el dashboard).
+                    </p>
+                </div>
+            </section>
+
+            <section class="panel about-block">
+                <h2>Componentes del DataMart y del dashboard</h2>
+                <p class="about-lead">
+                    El DataMart conserva el modelo estrella (<code>fact_credito</code> + dimensiones).
+                    La vista <code>vw_creditos_analitica</code> une hechos y dimensiones para consulta analitica.
+                    El dashboard lee esa vista y deriva los KPIs: el hecho es cada credito;
+                    el KPI es la agregacion de negocio sobre esos hechos.
+                </p>
+                <div class="avance-table-wrap">
+                    <table class="avance-table">
+                        <thead>
+                            <tr>
+                                <th>Componente</th>
+                                <th>Definicion</th>
+                                <th>Rol en la solucion</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>fact_credito</code></td>
+                                <td>Tabla de hechos fisica</td>
+                                <td>Almacena cada credito: montos, tasa, cantidad y claves foraneas a dimensiones.</td>
+                            </tr>
+                            <tr>
+                                <td>Dimensiones</td>
+                                <td>Tablas de contexto</td>
+                                <td>Tiempo, geografia, producto, IFI y plazo para segmentar el analisis.</td>
+                            </tr>
+                            <tr>
+                                <td><code>vw_creditos_analitica</code></td>
+                                <td>Vista SQL (JOIN hechos + dims)</td>
+                                <td>Centraliza el JOIN analitico; no sustituye el modelo estrella, lo reutiliza.</td>
+                            </tr>
+                            <tr>
+                                <td>KPIs</td>
+                                <td>Indicadores agregados</td>
+                                <td><code>SUM</code>/<code>AVG</code>/% calculados sobre la vista. No son filas de la tabla de hechos.</td>
+                            </tr>
+                            <tr>
+                                <td>Dashboard</td>
+                                <td>Capa de visualizacion BI</td>
+                                <td>Consume la API Flask, que consulta unicamente la vista analitica.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel about-block">
+                <h2>Que consume el dashboard</h2>
+                <p class="about-lead">
+                    Todas las consultas de <code>DashboardService</code> van a
+                    <code>vw_creditos_analitica</code> (no a <code>fact_credito</code> directo).
+                    Flujo: MySQL → Service → <code>/api/dashboard</code> → JavaScript → tarjetas, graficos, mapa y tabla.
+                </p>
+                <div class="about-grid-3">
+                    <div>
+                        <strong>1. API</strong>
+                        <p><code>/api/health</code>, <code>/api/filtros</code>, <code>/api/dashboard</code>, <code>/api/export</code>.</p>
+                    </div>
+                    <div>
+                        <strong>2. Agregaciones</strong>
+                        <p>KPIs, series mensuales, rankings y concentracion con <code>SUM</code>/<code>AVG</code>/<code>GROUP BY</code>.</p>
+                    </div>
+                    <div>
+                        <strong>3. UI</strong>
+                        <p>Chart.js (8 graficos), Leaflet (mapa), tabla paginada y export Excel/CSV.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel about-block">
+                <h2>Inventario del dashboard: 16 metricas visuales</h2>
+                <p class="about-lead">
+                    En pantalla hay <strong>8 KPIs en tarjetas + 8 graficos Chart.js = 16 metricas/visualizaciones</strong>
+                    de analisis. Ademas, el mapa Leaflet y la tabla de detalle (no cuentan dentro de esas 16).
+                </p>
+                <div class="dashboard-row row-about">
+                    <article>
+                        <h3 class="about-subtitle">8 KPIs (tarjetas)</h3>
+                        <ol class="about-list about-ol">
+                            <li>Monto total</li>
+                            <li>Cantidad de creditos</li>
+                            <li>Ticket promedio</li>
+                            <li>Tasa promedio</li>
+                            <li>Crecimiento mensual</li>
+                            <li>Mejor mes</li>
+                            <li>Participacion NMIV</li>
+                            <li>Concentracion Lima</li>
+                        </ol>
+                    </article>
+                    <article>
+                        <h3 class="about-subtitle">8 graficos</h3>
+                        <ol class="about-list about-ol">
+                            <li>Tendencia mensual (monto + cantidad)</li>
+                            <li>Monto por trimestre</li>
+                            <li>Lima vs resto del pais</li>
+                            <li>Distribucion por plazo</li>
+                            <li>Monto y ticket por producto</li>
+                            <li>Top departamentos</li>
+                            <li>Top IFI por monto</li>
+                            <li>Tasa por producto y tipo de IFI</li>
+                        </ol>
+                    </article>
+                </div>
+                <p style="margin-top:12px">
+                    Extra: <strong>mapa coropletico</strong> por departamento y
+                    <strong>detalle analitico</strong> paginado (50 registros) con exportacion.
+                </p>
+            </section>
+
+            <section class="dashboard-row row-about">
+                <article class="panel">
+                    <h2>Avance 2 · De la fuente al DataMart</h2>
+                    <ol class="about-list about-ol">
+                        <li>Extraccion del CSV publico de colocaciones Mivivienda 2024.</li>
+                        <li>Limpieza: 4,160 vacias y 11 duplicados eliminados.</li>
+                        <li>Transformacion de fechas, montos, tasas, ubigeo y plazos.</li>
+                        <li>Carga a dimensiones + <code>fact_credito</code> (9,336 hechos).</li>
+                        <li>Carga incremental segura con <code>record_hash</code>.</li>
+                    </ol>
+                </article>
+                <article class="panel">
+                    <h2>Como se conecta con el dashboard</h2>
+                    <ol class="about-list about-ol">
+                        <li>Flask llama a <code>DashboardService</code>.</li>
+                        <li>El servicio consulta <code>vw_creditos_analitica</code>.</li>
+                        <li>Calcula KPIs con <code>SUM</code>, <code>AVG</code> y rankings.</li>
+                        <li>La API <code>/api/dashboard</code> envia JSON al navegador.</li>
+                        <li>Chart.js, Leaflet y la tabla renderizan filtros en vivo.</li>
+                    </ol>
+                    <p style="margin-top:12px">
+                        Si, <strong>todo cuadra con el dashboard</strong>: cada KPI y grafico
+                        sale de la misma vista analitica del DataMart.
+                    </p>
+                </article>
+            </section>
+
+            <section class="dashboard-row row-about-charts">
+                <article class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Embudo de calidad del ETL</h2>
+                            <p class="panel-sub">De filas leidas a hechos en el DataMart</p>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-mid">
+                        <canvas id="quality-chart"></canvas>
+                    </div>
+                </article>
+                <article class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Resultado de la carga</h2>
+                            <p class="panel-sub">Distribucion de las 13,507 filas origen</p>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-doughnut">
+                        <canvas id="outcome-chart"></canvas>
+                    </div>
+                </article>
+            </section>
+
+            <section class="panel about-block">
+                <h2>Avance 3 · KPIs: por que se eligieron</h2>
+                <p class="about-lead">
+                    Un KPI no es una fila de la tabla de hechos. Es un indicador de negocio
+                    calculado a partir de las <strong>medidas</strong> de
+                    <code>fact_credito</code> (monto, tasa, cantidad) y de los atributos de
+                    las dimensiones (mes, producto, departamento, IFI).
+                </p>
+                <div class="avance-table-wrap">
+                    <table class="avance-table">
+                        <thead>
+                            <tr>
+                                <th>KPI</th>
+                                <th>Como se calcula</th>
+                                <th>Por que se eligio</th>
+                                <th>Donde se ve</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Cantidad de creditos</td>
+                                <td><code>SUM(cantidad_creditos)</code></td>
+                                <td>Mide volumen operativo de colocaciones.</td>
+                                <td>Tarjeta resumen</td>
+                            </tr>
+                            <tr>
+                                <td>Monto total</td>
+                                <td><code>SUM(monto_credito)</code></td>
+                                <td>Mide capital colocado (impacto financiero).</td>
+                                <td>Tarjeta + export Excel</td>
+                            </tr>
+                            <tr>
+                                <td>Ticket promedio</td>
+                                <td><code>AVG(monto_credito)</code></td>
+                                <td>Compara el tamano tipico del credito.</td>
+                                <td>Tarjeta resumen</td>
+                            </tr>
+                            <tr>
+                                <td>Tasa promedio</td>
+                                <td><code>AVG(tasa_interes)</code></td>
+                                <td>Resume condiciones de precio del credito.</td>
+                                <td>Tarjeta resumen</td>
+                            </tr>
+                            <tr>
+                                <td>Crecimiento mensual</td>
+                                <td>Variacion % monto mes actual vs anterior</td>
+                                <td>Detecta aceleracion o caida de colocacion.</td>
+                                <td>Tarjeta resumen</td>
+                            </tr>
+                            <tr>
+                                <td>Mejor mes</td>
+                                <td>Mes con mayor <code>SUM(monto)</code></td>
+                                <td>Identifica el pico estacional del periodo.</td>
+                                <td>Tarjeta resumen</td>
+                            </tr>
+                            <tr>
+                                <td>Participacion NMIV</td>
+                                <td>% monto del producto NMIV / total</td>
+                                <td>Mide concentracion por linea de producto.</td>
+                                <td>Tarjeta + graficos producto</td>
+                            </tr>
+                            <tr>
+                                <td>Concentracion Lima</td>
+                                <td>% monto Lima / total</td>
+                                <td>Mide sesgo geografico de la colocacion.</td>
+                                <td>Tarjeta + dona + mapa</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel about-block">
+                <h2>Reportes analiticos del dashboard</h2>
+                <p class="about-lead">
+                    Equivalen a los reportes del enunciado (ventas/mes, productos, tendencias,
+                    comparativos), adaptados al dominio Mivivienda.
+                </p>
+                <div class="about-grid-3">
+                    <div>
+                        <strong>Tendencia mensual</strong>
+                        <p>Barras de monto + linea de cantidad por mes (como “ventas por mes”).</p>
+                    </div>
+                    <div>
+                        <strong>Productos e IFI</strong>
+                        <p>Monto/ticket por producto y top instituciones (como “mas vendidos”).</p>
+                    </div>
+                    <div>
+                        <strong>Geografia y plazos</strong>
+                        <p>Mapa, Lima vs resto, distribucion por plazo y tasas por tipo de IFI.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel about-block">
+                <h2>Analisis e interpretacion de resultados</h2>
+                <ol class="about-list about-ol">
+                    <li>
+                        <strong>Volumen:</strong> 9,336 creditos y S/ 1,695.9 M colocados confirman
+                        una base suficiente para analisis nacional 2024.
+                    </li>
+                    <li>
+                        <strong>Ticket y tasa:</strong> ticket ~S/ 181,650 y tasa ~10.03% describen
+                        el perfil tipico del credito Mivivienda en el periodo.
+                    </li>
+                    <li>
+                        <strong>Patron geografico:</strong> Lima concentra ~72.9% del monto; el mapa
+                        y la dona muestran alta centralizacion territorial.
+                    </li>
+                    <li>
+                        <strong>Patron de producto:</strong> NMIV aporta ~91.8% del monto; FCTP y
+                        S-CRC son residuales en participacion.
+                    </li>
+                    <li>
+                        <strong>Patron temporal:</strong> septiembre fue el mejor mes
+                        (S/ 227.5 M); el crecimiento dic vs nov ayuda a leer el cierre de anio.
+                    </li>
+                    <li>
+                        <strong>Toma de decisiones:</strong> con filtros por departamento, producto
+                        y tipo de IFI se puede priorizar zonas, productos o canales institucionales.
+                    </li>
+                </ol>
+            </section>
+
+            <section class="dashboard-row row-about">
+                <article class="panel">
+                    <h2>Conclusiones</h2>
+                    <ul class="about-list">
+                        <li><strong>Beneficio:</strong> DataMart confiable (9,336 hechos, 0 huerfanos) + tablero usable.</li>
+                        <li><strong>Impacto:</strong> el negocio ya se puede explorar por tiempo, geo, producto e IFI.</li>
+                        <li><strong>Metodo:</strong> el flujo fuente → ETL → estrella → dashboard queda demostrado de punta a punta.</li>
+                    </ul>
+                </article>
+                <article class="panel">
+                    <h2>Recomendaciones</h2>
+                    <ul class="about-list">
+                        <li><strong>Escalabilidad:</strong> mantener carga incremental con <code>record_hash</code>.</li>
+                        <li><strong>Nuevas dimensiones:</strong> canal, moneda o segmento de vivienda.</li>
+                        <li><strong>Futuro:</strong> integrar el DataMart a un Data Warehouse corporativo y/o Power BI.</li>
+                    </ul>
+                </article>
+            </section>
+
+            <section class="panel about-block">
+                <h2>Sustentacion final · entregables y evaluacion</h2>
+                <div class="about-grid-3">
+                    <div>
+                        <strong>Entregables cubiertos</strong>
+                        <p>Dashboards, reportes, KPIs, conclusiones, manual de usuario y esta presentacion.</p>
+                    </div>
+                    <div>
+                        <strong>Aspectos a defender</strong>
+                        <p>Modelo estrella, ETL, interpretacion de KPIs y lectura del dashboard en vivo.</p>
+                    </div>
+                    <div>
+                        <strong>Criterios</strong>
+                        <p>Dashboards 30% · Analisis 25% · KPIs 20% · Conclusiones 15% · Sustentacion 10%.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="dashboard-row row-about">
+                <article class="panel">
+                    <h2>Manual basico de usuario</h2>
+                    <ol class="about-list about-ol">
+                        <li>Abrir <code>http://127.0.0.1:5000</code>.</li>
+                        <li>Verificar el estado <strong>MySQL conectado</strong> en la sidebar.</li>
+                        <li>Usar filtros (departamento, producto, tipo IFI) y pulsar <strong>Aplicar</strong>.</li>
+                        <li>Explorar KPIs, mapa, graficos y detalle paginado.</li>
+                        <li>Exportar resultados con <strong>Exportar → Excel / CSV</strong>.</li>
+                    </ol>
+                </article>
+                <article class="panel">
+                    <h2>Documentacion tecnica</h2>
+                    <ul class="about-list">
+                        <li><code>README.md</code> — instalacion y arquitectura</li>
+                        <li><code>sql/02_datamart.sql</code> — modelo estrella</li>
+                        <li><code>docs/guia_avance_2.md</code> — evidencias ETL</li>
+                        <li><code>tests/</code> — pruebas automatizadas</li>
+                    </ul>
+                </article>
+            </section>
+
+            <section class="panel about-cta">
+                <div>
+                    <h2>Demostracion en vivo</h2>
+                    <p>Abre el dashboard funcional con los 9,336 creditos del DataMart.</p>
+                </div>
+                <a class="primary-button about-cta-button" href="{{ url_for('index') }}">
+                    Ir al dashboard
+                </a>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        (function () {
+            const toggle = document.querySelector("#theme-toggle");
+            const label = document.querySelector("#theme-toggle-label");
+            function sync() {
+                const theme = document.documentElement.getAttribute("data-theme") || "light";
+                label.textContent = theme === "dark" ? "Modo claro" : "Modo oscuro";
+            }
+            sync();
+            toggle?.addEventListener("click", () => {
+                const next = document.documentElement.getAttribute("data-theme") === "dark"
+                    ? "light"
+                    : "dark";
+                document.documentElement.setAttribute("data-theme", next);
+                localStorage.setItem("mivivienda-theme", next);
+                sync();
+                renderCharts();
+            });
+
+            function colors() {
+                const styles = getComputedStyle(document.documentElement);
+                return {
+                    primary: styles.getPropertyValue("--chart-1").trim() || "#5d5fef",
+                    mint: styles.getPropertyValue("--chart-2").trim() || "#00e096",
+                    amber: styles.getPropertyValue("--chart-3").trim() || "#ffcf4b",
+                    coral: styles.getPropertyValue("--chart-6").trim() || "#f93c65",
+                    text: styles.getPropertyValue("--chart-text").trim() || "#737791",
+                    grid: styles.getPropertyValue("--chart-grid").trim() || "rgba(0,0,0,.08)",
+                    surface: styles.getPropertyValue("--surface").trim() || "#fff",
+                };
+            }
+
+            let qualityChart;
+            let outcomeChart;
+
+            function renderCharts() {
+                const c = colors();
+                const qualityCtx = document.querySelector("#quality-chart");
+                const outcomeCtx = document.querySelector("#outcome-chart");
+                if (!qualityCtx || !outcomeCtx || typeof Chart === "undefined") {
+                    return;
+                }
+
+                if (qualityChart) qualityChart.destroy();
+                if (outcomeChart) outcomeChart.destroy();
+
+                qualityChart = new Chart(qualityCtx, {
+                    type: "bar",
+                    data: {
+                        labels: ["Leidas", "No vacias", "Unicas", "Cargadas"],
+                        datasets: [{
+                            label: "Filas",
+                            data: [13507, 9347, 9336, 9336],
+                            backgroundColor: [c.coral, c.amber, c.primary, c.mint],
+                            borderRadius: 8,
+                            barPercentage: 0.55,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => `${ctx.raw.toLocaleString("es-PE")} filas`,
+                                },
+                            },
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: c.text },
+                            },
+                            y: {
+                                grid: { color: c.grid },
+                                ticks: { color: c.text },
+                            },
+                        },
+                    },
+                });
+
+                outcomeChart = new Chart(outcomeCtx, {
+                    type: "doughnut",
+                    data: {
+                        labels: ["Cargadas", "Vacias", "Duplicados"],
+                        datasets: [{
+                            data: [9336, 4160, 11],
+                            backgroundColor: [c.mint, c.coral, c.amber],
+                            borderColor: c.surface,
+                            borderWidth: 3,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: "68%",
+                        plugins: {
+                            legend: {
+                                position: "bottom",
+                                labels: {
+                                    usePointStyle: true,
+                                    boxWidth: 8,
+                                    color: c.text,
+                                },
+                            },
+                        },
+                    },
+                });
+            }
+
+            renderCharts();
+        })();
+    </script>
+</body>
+</html>

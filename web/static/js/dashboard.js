@@ -4,6 +4,8 @@ let peruLayer = null;
 let mapTiles = null;
 let latestDashboard = null;
 let latestMapRows = [];
+let detailPage = 1;
+const DETAIL_PAGE_SIZE = 50;
 
 const currency = new Intl.NumberFormat("es-PE", {
     style: "currency",
@@ -97,14 +99,91 @@ function setText(id, value) {
 function bindEvents() {
     document
         .querySelector("#apply-filters")
-        .addEventListener("click", loadDashboard);
+        ?.addEventListener("click", () => {
+            detailPage = 1;
+            loadDashboard();
+        });
 
-    document.querySelector("#clear-filters").addEventListener("click", () => {
+    document.querySelector("#clear-filters")?.addEventListener("click", () => {
         ["departamento", "producto", "tipo_ifi"].forEach((id) => {
             document.querySelector(`#${id}`).value = "";
         });
+        detailPage = 1;
         loadDashboard();
     });
+
+    document.querySelector("#detalle-prev")?.addEventListener("click", () => {
+        if (detailPage > 1) {
+            detailPage -= 1;
+            loadDashboard({ preserveScroll: true });
+        }
+    });
+
+    document.querySelector("#detalle-next")?.addEventListener("click", () => {
+        const meta = latestDashboard?.detalle_meta;
+        if (meta && detailPage < meta.total_pages) {
+            detailPage += 1;
+            loadDashboard({ preserveScroll: true });
+        }
+    });
+
+    bindExportMenu();
+}
+
+function bindExportMenu() {
+    const toggle = document.querySelector("#export-toggle");
+    const menu = document.querySelector("#export-options");
+    if (!toggle || !menu) {
+        return;
+    }
+
+    toggle.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const open = menu.hasAttribute("hidden");
+        menu.toggleAttribute("hidden", !open);
+        toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+
+    document.addEventListener("click", () => {
+        menu.setAttribute("hidden", "");
+        toggle.setAttribute("aria-expanded", "false");
+    });
+
+    menu.addEventListener("click", (event) => event.stopPropagation());
+
+    document.querySelector("#export-excel")?.addEventListener("click", () => {
+        downloadExport("xlsx");
+        menu.setAttribute("hidden", "");
+        toggle.setAttribute("aria-expanded", "false");
+    });
+
+    document.querySelector("#export-csv")?.addEventListener("click", () => {
+        downloadExport("csv");
+        menu.setAttribute("hidden", "");
+        toggle.setAttribute("aria-expanded", "false");
+    });
+}
+
+function currentFilterParams() {
+    const params = new URLSearchParams();
+    ["departamento", "producto", "tipo_ifi"].forEach((id) => {
+        const value = document.querySelector(`#${id}`)?.value;
+        if (value) {
+            params.set(id, value);
+        }
+    });
+    return params;
+}
+
+function downloadExport(formato) {
+    const params = currentFilterParams();
+    params.set("formato", formato);
+    const link = document.createElement("a");
+    link.href = `/api/export?${params.toString()}`;
+    link.download = "";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
 }
 
 async function checkHealth() {
@@ -146,7 +225,7 @@ function populateSelect(id, values) {
     });
 }
 
-async function loadDashboard() {
+async function loadDashboard(options = {}) {
     setLoading(true);
     try {
         const params = new URLSearchParams();
@@ -156,6 +235,8 @@ async function loadDashboard() {
                 params.set(id, value);
             }
         });
+        params.set("page", String(detailPage));
+        params.set("page_size", String(DETAIL_PAGE_SIZE));
 
         const response = await fetch(`/api/dashboard?${params.toString()}`);
         if (!response.ok) {
@@ -164,10 +245,19 @@ async function loadDashboard() {
         const data = await response.json();
         latestDashboard = data;
         latestMapRows = data.mapa || [];
+        if (data.detalle_meta?.page) {
+            detailPage = data.detalle_meta.page;
+        }
         updateKpis(data.kpis);
         updateCharts(data);
         await updateMap(latestMapRows);
-        updateTable(data.detalle);
+        updateTable(data.detalle, data.detalle_meta);
+        if (options.preserveScroll) {
+            document.querySelector("#detalle")?.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+            });
+        }
     } catch (error) {
         showError(error.message);
     } finally {
@@ -771,9 +861,37 @@ function renderChart(key, canvasId, config) {
     charts[key] = new Chart(document.querySelector(`#${canvasId}`), config);
 }
 
-function updateTable(rows) {
+function updateTable(rows, meta = {}) {
     const body = document.querySelector("#detail-body");
+    const page = meta.page || 1;
+    const pageSize = meta.page_size || DETAIL_PAGE_SIZE;
+    const total = meta.total || 0;
+    const totalPages = meta.total_pages || 1;
+    const startIndex = (page - 1) * pageSize;
     body.innerHTML = "";
+
+    const subtitle = document.querySelector("#detalle-subtitle");
+    if (subtitle) {
+        subtitle.textContent = total
+            ? `${integer.format(total)} registros · ${pageSize} por pagina`
+            : "Sin registros para estos filtros";
+    }
+
+    const pageInfo = document.querySelector("#detalle-page-info");
+    if (pageInfo) {
+        pageInfo.textContent = total
+            ? `Pagina ${page} de ${totalPages}`
+            : "Pagina 0";
+    }
+
+    const prev = document.querySelector("#detalle-prev");
+    const next = document.querySelector("#detalle-next");
+    if (prev) {
+        prev.disabled = page <= 1 || total === 0;
+    }
+    if (next) {
+        next.disabled = page >= totalPages || total === 0;
+    }
 
     if (!rows.length) {
         body.innerHTML = `
@@ -787,7 +905,7 @@ function updateTable(rows) {
     rows.forEach((row, index) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td>${index + 1}</td>
+            <td>${startIndex + index + 1}</td>
             <td>${escapeHtml(row.fecha_desembolso)}</td>
             <td>${escapeHtml(row.codigo_producto)}</td>
             <td>${escapeHtml(row.departamento)}</td>

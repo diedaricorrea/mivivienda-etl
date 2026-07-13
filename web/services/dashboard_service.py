@@ -36,8 +36,21 @@ class DashboardService:
                 ]
         return result
 
-    def get_dashboard(self, filters: dict[str, str]) -> dict:
+    def get_dashboard(
+        self,
+        filters: dict[str, str],
+        page: int = 1,
+        page_size: int = 50,
+    ) -> dict:
         where_sql, params = self._build_where(filters)
+        page = max(1, int(page or 1))
+        page_size = max(1, min(int(page_size or 50), 100))
+        offset = (page - 1) * page_size
+        detalle_params = {
+            **params,
+            "limit": page_size,
+            "offset": offset,
+        }
 
         queries = {
             "kpis": f"""
@@ -153,6 +166,11 @@ class DashboardService:
                     END
                 ORDER BY monto_total DESC
             """,
+            "detalle_count": f"""
+                SELECT COUNT(*) AS total
+                FROM vw_creditos_analitica
+                {where_sql}
+            """,
             "detalle": f"""
                 SELECT
                     fecha_desembolso,
@@ -168,7 +186,7 @@ class DashboardService:
                 FROM vw_creditos_analitica
                 {where_sql}
                 ORDER BY fecha_desembolso DESC, monto_credito DESC
-                LIMIT 100
+                LIMIT :limit OFFSET :offset
             """,
         }
 
@@ -185,6 +203,17 @@ class DashboardService:
             concentracion = self._fetch_rows(
                 connection, queries["concentracion"], params
             )
+            detalle_total = int(
+                connection.execute(
+                    text(queries["detalle_count"]), params
+                ).scalar()
+                or 0
+            )
+            total_pages = max(1, (detalle_total + page_size - 1) // page_size)
+            if page > total_pages:
+                page = total_pages
+                offset = (page - 1) * page_size
+                detalle_params["offset"] = offset
 
             response = {
                 "kpis": self._enrich_kpis(kpis, mensual, productos, concentracion),
@@ -210,8 +239,14 @@ class DashboardService:
                 ),
                 "concentracion": concentracion,
                 "detalle": self._fetch_rows(
-                    connection, queries["detalle"], params
+                    connection, queries["detalle"], detalle_params
                 ),
+                "detalle_meta": {
+                    "page": page,
+                    "page_size": page_size,
+                    "total": detalle_total,
+                    "total_pages": total_pages,
+                },
                 "filtros_aplicados": {
                     key: value for key, value in filters.items() if value
                 },
@@ -272,6 +307,58 @@ class DashboardService:
             else 0
         )
         return enriched
+
+    def build_export(self, filters: dict[str, str], formato: str = "xlsx") -> dict:
+        """Prepara datasets para exportar (Excel o CSV)."""
+        data = self.get_dashboard(filters, page=1, page_size=1000)
+        applied = data.get("filtros_aplicados") or {}
+        kpis = data["kpis"]
+
+        resumen_rows = [
+            {"indicador": "Cantidad de creditos", "valor": kpis.get("cantidad")},
+            {"indicador": "Monto total", "valor": kpis.get("monto_total")},
+            {"indicador": "Ticket promedio", "valor": kpis.get("monto_promedio")},
+            {"indicador": "Tasa promedio (%)", "valor": kpis.get("tasa_promedio")},
+            {
+                "indicador": "Crecimiento mensual (%)",
+                "valor": kpis.get("crecimiento_mensual_pct"),
+            },
+            {"indicador": "Mejor mes", "valor": kpis.get("mejor_mes")},
+            {"indicador": "Monto mejor mes", "valor": kpis.get("mejor_mes_monto")},
+            {
+                "indicador": "Participacion NMIV (%)",
+                "valor": kpis.get("participacion_nmiv_pct"),
+            },
+            {
+                "indicador": "Concentracion Lima (%)",
+                "valor": kpis.get("concentracion_lima_pct"),
+            },
+            {
+                "indicador": "Filtro departamento",
+                "valor": applied.get("departamento", "Todos"),
+            },
+            {
+                "indicador": "Filtro producto",
+                "valor": applied.get("producto", "Todos"),
+            },
+            {
+                "indicador": "Filtro tipo IFI",
+                "valor": applied.get("tipo_ifi", "Todos"),
+            },
+        ]
+
+        return {
+            "formato": formato,
+            "resumen": resumen_rows,
+            "mensual": data["mensual"],
+            "productos": data["productos"],
+            "departamentos": data["departamentos"],
+            "instituciones": data["instituciones"],
+            "trimestres": data["trimestres"],
+            "detalle": data["detalle"],
+            "detalle_total": data["detalle_meta"]["total"],
+            "filtros": applied,
+        }
 
     @staticmethod
     def _build_where(filters: dict[str, str]) -> tuple[str, dict]:
