@@ -5,7 +5,7 @@ Implementacion del Avance 2 de Inteligencia de Negocios usando:
 - Python y pandas para Extract, Transform y Load.
 - MySQL 8 para staging, dimensiones, hechos, indices y restricciones.
 - Flask para el backend web y las APIs REST.
-- HTML, CSS, JavaScript y Chart.js para el dashboard.
+- HTML, CSS, JavaScript, Chart.js y Leaflet para el dashboard web.
 
 ## Arquitectura del proyecto
 
@@ -67,12 +67,12 @@ mivivienda_etl/
 |-- web/
 |   |-- app.py              Controlador Flask y APIs
 |   |-- services/           Logica y consultas del dashboard
-|   |-- templates/          HTML
+|   |-- templates/          HTML del dashboard web
 |   `-- static/
 |       |-- css/            Estilos
-|       `-- js/             fetch, filtros, graficos y tabla
+|       |-- js/             fetch, filtros, graficos, mapa y tabla
+|       `-- geo/            GeoJSON de departamentos del Peru
 |-- tests/                  Pruebas ETL y API
-|-- dashboard/              Version alternativa en Streamlit
 |-- docs/                   Informe, guion y evidencias
 |-- .env.example            Ejemplo de configuracion
 `-- requirements.txt        Dependencias Python
@@ -197,7 +197,7 @@ Hechos insertados: 9,336
 
 Las cinco pruebas deben finalizar con `OK`.
 
-#### 9. Iniciar el backend y dashboard
+#### 9. Iniciar el dashboard web
 
 ```powershell
 .\.venv\Scripts\python.exe -m web.app
@@ -213,10 +213,10 @@ El mismo proceso Flask sirve:
 
 - El backend Python.
 - Las APIs REST.
-- El HTML.
-- Los archivos CSS y JavaScript.
+- El HTML del dashboard.
+- Los archivos CSS, JavaScript y el mapa GeoJSON.
 
-No es necesario iniciar Angular, Node.js ni otro servidor.
+No es necesario iniciar Angular, Node.js, Streamlit ni otro servidor.
 
 ### Ejecuciones posteriores
 
@@ -300,7 +300,9 @@ Consultas de verificacion de KPIs:
 sql/04_consultas_kpi.sql
 ```
 
-## Dashboard
+## Dashboard web
+
+El unico dashboard del proyecto es la aplicacion Flask en `web/`.
 
 ```powershell
 .\.venv\Scripts\python.exe -m web.app
@@ -318,8 +320,13 @@ GET /api/dashboard
 GET /api/dashboard?departamento=LIMA&producto=NMIV
 ```
 
-La interfaz incluye filtros por departamento, producto y tipo de IFI.
-`dashboard/app.py` se conserva como una version alternativa en Streamlit.
+La interfaz incluye:
+
+- KPIs de volumen, ticket, tasa, crecimiento mensual, mejor mes, participacion
+  NMIV y concentracion en Lima.
+- Graficos de tendencia dual, trimestres, productos, plazos, tasas e IFI.
+- Mapa coropletico de Peru por departamento (Leaflet + GeoJSON).
+- Filtros por departamento, producto y tipo de IFI.
 
 El guion sugerido para la demostracion se encuentra en
 `docs/guion_exposicion.md`.

@@ -332,15 +332,15 @@ Chart.js se utiliza para construir los graficos de linea, dona y barras.
 > Este archivo controla completamente el diseno: colores, menu lateral,
 > tarjetas, tablas, responsive y estados de carga.
 
-> A diferencia de Streamlit, esta arquitectura permite modificar directamente
-> HTML, CSS y JavaScript sin necesitar Angular ni un servidor frontend
-> separado.
+> A diferencia de un dashboard generado automaticamente, esta arquitectura
+> permite modificar directamente HTML, CSS y JavaScript sin necesitar Angular
+> ni un servidor frontend separado.
 
-### 5.12 `dashboard/app.py`
+### 5.12 Resumen del frontend
 
-> Esta es la version inicial hecha con Streamlit. Se conserva como alternativa
-> y como comparacion tecnica, pero el dashboard principal para la exposicion
-> es la aplicacion Flask ubicada en `web`.
+> El dashboard oficial es la aplicacion web Flask. HTML, CSS, JavaScript,
+> Chart.js y Leaflet consultan las APIs y actualizan KPIs, graficos y el mapa
+> de departamentos. No se utiliza Streamlit.
 
 ### 5.13 `tests/test_transform.py` y `tests/test_web_api.py`
 
@@ -463,14 +463,14 @@ http://localhost:5000
 
 Demostrar:
 
-1. Tarjetas de cantidad, monto total, monto promedio y tasa promedio.
-2. Evolucion mensual.
-3. Participacion por producto.
-4. Ranking de departamentos e IFI.
+1. Tarjetas de cantidad, monto total, ticket, tasa, crecimiento y concentracion.
+2. Evolucion mensual dual (monto + cantidad).
+3. Monto por trimestre y mapa coropletico de Peru.
+4. Productos, plazos, tasas por tipo de IFI e instituciones.
 5. Filtros por departamento, producto y tipo de IFI.
 
-Aplicar al menos un filtro para demostrar que todos los indicadores y graficos
-se actualizan.
+Aplicar al menos un filtro para demostrar que todos los indicadores, graficos
+y el mapa se actualizan.
 
 ## 10. Cierre
 

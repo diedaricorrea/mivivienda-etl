@@ -1,30 +1,70 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BI Mivivienda 2024</title>
+    <script>
+        (function () {
+            const saved = localStorage.getItem("mivivienda-theme");
+            const theme = saved === "light" || saved === "dark"
+                ? saved
+                : "light";
+            document.documentElement.setAttribute("data-theme", theme);
+        })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
     <div class="app-shell">
         <aside class="sidebar">
             <div class="brand">
-                <div class="brand-mark">MV</div>
-                <div>
-                    <span class="brand-overline">DATAMART</span>
-                    <strong>Mivivienda BI</strong>
+                <div class="brand-mark" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <path d="M4 18V8.5L12 4l8 4.5V18l-8 4-8-4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                        <path d="M12 12v10M4 8.5l8 3.5 8-3.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    </svg>
                 </div>
+                <strong>Mivivienda</strong>
             </div>
 
             <nav class="nav-list" aria-label="Navegacion principal">
-                <a class="nav-item active" href="#resumen">Resumen</a>
-                <a class="nav-item" href="#analisis">Analisis</a>
-                <a class="nav-item" href="#detalle">Detalle</a>
+                <a class="nav-item active" href="#resumen">
+                    <span class="nav-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+                    </span>
+                    Resumen
+                </a>
+                <a class="nav-item" href="#tendencias">
+                    <span class="nav-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 19h16M6 16l4-5 3 3 5-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    Tendencias
+                </a>
+                <a class="nav-item" href="#mapa">
+                    <span class="nav-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 4.5 3 7v12.5l6-2.5 6 2.5 6-2.5V4.5L15 7 9 4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 4.5V17M15 7v12.5" stroke="currentColor" stroke-width="1.8"/></svg>
+                    </span>
+                    Mapa
+                </a>
+                <a class="nav-item" href="#analisis">
+                    <span class="nav-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 19V9M12 19V5M19 19v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    </span>
+                    Analisis
+                </a>
+                <a class="nav-item" href="#detalle">
+                    <span class="nav-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M7 7h10M7 12h10M7 17h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="3.5" y="3.5" width="17" height="17" rx="3" stroke="currentColor" stroke-width="1.8"/></svg>
+                    </span>
+                    Detalle
+                </a>
             </nav>
 
             <section class="filters">
@@ -61,83 +101,195 @@
                 </button>
             </section>
 
-            <div class="database-status">
-                <span id="status-dot" class="status-dot"></span>
-                <div>
-                    <small>Estado de datos</small>
-                    <strong id="status-text">Conectando...</strong>
+            <div class="sidebar-cta">
+                <strong>DataMart 2024</strong>
+                <p>Modelo estrella con 9,336 creditos colocados.</p>
+                <div class="database-status">
+                    <span id="status-dot" class="status-dot"></span>
+                    <div>
+                        <small>Estado de datos</small>
+                        <strong id="status-text">Conectando...</strong>
+                    </div>
                 </div>
             </div>
         </aside>
 
         <main class="content">
             <header class="topbar" id="resumen">
-                <div>
-                    <span class="eyebrow">INTELIGENCIA DE NEGOCIOS</span>
-                    <h1>Colocaciones Mivivienda 2024</h1>
-                    <p>
-                        Indicadores consolidados desde el DataMart de creditos
-                        desembolsados.
-                    </p>
+                <h1>Dashboard</h1>
+                <div class="topbar-search" role="search">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/>
+                        <path d="m16 16 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                    <input type="search" placeholder="Buscar en el tablero..." disabled aria-disabled="true">
                 </div>
-                <div class="header-badge">
-                    <span>Periodo</span>
-                    <strong>Ene - Dic 2024</strong>
+                <div class="topbar-actions">
+                    <button
+                        id="theme-toggle"
+                        class="icon-chip"
+                        type="button"
+                        aria-label="Cambiar tema"
+                    >
+                        <span class="theme-toggle-icon" aria-hidden="true"></span>
+                        <span id="theme-toggle-label">Modo oscuro</span>
+                    </button>
+                    <div class="header-badge">
+                        <span>Periodo</span>
+                        <strong>Ene - Dic 2024</strong>
+                    </div>
                 </div>
             </header>
 
-            <section class="kpi-grid" aria-label="Indicadores principales">
-                <article class="kpi-card">
-                    <span class="kpi-label">Cantidad de creditos</span>
-                    <strong id="kpi-cantidad" class="kpi-value">--</strong>
-                    <span class="kpi-note">Operaciones desembolsadas</span>
+            <section class="dashboard-row row-summary">
+                <article class="panel panel-sales">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Colocaciones del periodo</h2>
+                            <p class="panel-sub">Resumen</p>
+                        </div>
+                        <span class="chip-outline">Exportar</span>
+                    </div>
+                    <div class="kpi-grid" aria-label="Indicadores principales">
+                        <article class="kpi-tile kpi-pink">
+                            <span class="kpi-icon" aria-hidden="true">$</span>
+                            <strong id="kpi-total" class="kpi-value">--</strong>
+                            <span class="kpi-label">Monto total</span>
+                            <span class="kpi-note">Capital colocado</span>
+                        </article>
+                        <article class="kpi-tile kpi-amber">
+                            <span class="kpi-icon" aria-hidden="true">#</span>
+                            <strong id="kpi-cantidad" class="kpi-value">--</strong>
+                            <span class="kpi-label">Cantidad de creditos</span>
+                            <span class="kpi-note">Operaciones desembolsadas</span>
+                        </article>
+                        <article class="kpi-tile kpi-green">
+                            <span class="kpi-icon" aria-hidden="true">≈</span>
+                            <strong id="kpi-promedio" class="kpi-value">--</strong>
+                            <span class="kpi-label">Ticket promedio</span>
+                            <span class="kpi-note">Por cada credito</span>
+                        </article>
+                        <article class="kpi-tile kpi-violet">
+                            <span class="kpi-icon" aria-hidden="true">%</span>
+                            <strong id="kpi-tasa" class="kpi-value">--</strong>
+                            <span class="kpi-label">Tasa promedio</span>
+                            <span class="kpi-note">Promedio del periodo</span>
+                        </article>
+                    </div>
+                    <div class="kpi-grid kpi-grid-secondary" aria-label="Indicadores secundarios">
+                        <article class="kpi-tile kpi-mint">
+                            <strong id="kpi-crecimiento" class="kpi-value">--</strong>
+                            <span class="kpi-label">Crecimiento mensual</span>
+                            <span id="kpi-crecimiento-note" class="kpi-note">Vs mes anterior</span>
+                        </article>
+                        <article class="kpi-tile kpi-orange">
+                            <strong id="kpi-mejor-mes" class="kpi-value">--</strong>
+                            <span class="kpi-label">Mejor mes</span>
+                            <span id="kpi-mejor-mes-note" class="kpi-note">Mayor colocacion</span>
+                        </article>
+                        <article class="kpi-tile kpi-sky">
+                            <strong id="kpi-nmiv" class="kpi-value">--</strong>
+                            <span class="kpi-label">Participacion NMIV</span>
+                            <span class="kpi-note">Sobre monto total</span>
+                        </article>
+                        <article class="kpi-tile kpi-rose">
+                            <strong id="kpi-lima" class="kpi-value">--</strong>
+                            <span class="kpi-label">Concentracion Lima</span>
+                            <span class="kpi-note">Sobre monto total</span>
+                        </article>
+                    </div>
                 </article>
-                <article class="kpi-card">
-                    <span class="kpi-label">Monto total</span>
-                    <strong id="kpi-total" class="kpi-value kpi-value-money">--</strong>
-                    <span class="kpi-note">Capital colocado</span>
-                </article>
-                <article class="kpi-card">
-                    <span class="kpi-label">Monto promedio</span>
-                    <strong id="kpi-promedio" class="kpi-value kpi-value-money">--</strong>
-                    <span class="kpi-note">Por cada credito</span>
-                </article>
-                <article class="kpi-card accent-card">
-                    <span class="kpi-label">Tasa promedio</span>
-                    <strong id="kpi-tasa" class="kpi-value">--</strong>
-                    <span class="kpi-note">Promedio del periodo</span>
+
+                <article class="panel" id="tendencias">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Tendencia mensual</h2>
+                            <p class="panel-sub">Monto y cantidad</p>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-mid">
+                        <canvas id="monthly-chart"></canvas>
+                    </div>
                 </article>
             </section>
 
-            <section id="analisis" class="dashboard-grid">
-                <article class="panel panel-wide">
+            <section class="dashboard-row row-mid">
+                <article class="panel">
                     <div class="panel-header">
                         <div>
-                            <span class="panel-kicker">TENDENCIA</span>
-                            <h2>Monto colocado por mes</h2>
+                            <h2>Monto por trimestre</h2>
                         </div>
                     </div>
-                    <div class="chart-container chart-line">
-                        <canvas id="monthly-chart"></canvas>
+                    <div class="chart-container">
+                        <canvas id="quarter-chart"></canvas>
                     </div>
                 </article>
 
                 <article class="panel">
                     <div class="panel-header">
                         <div>
-                            <span class="panel-kicker">DISTRIBUCION</span>
-                            <h2>Participacion por producto</h2>
+                            <h2>Lima vs resto del pais</h2>
                         </div>
                     </div>
                     <div class="chart-container chart-doughnut">
+                        <canvas id="concentration-chart"></canvas>
+                    </div>
+                </article>
+
+                <article class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Distribucion por plazo</h2>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="term-chart"></canvas>
+                    </div>
+                    <div class="panel-footer-stats">
+                        <div>
+                            <span class="stat-dot mint"></span>
+                            <div>
+                                <small>Producto NMIV</small>
+                                <strong id="kpi-nmiv-footer">--</strong>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="stat-dot amber"></span>
+                            <div>
+                                <small>Lima</small>
+                                <strong id="kpi-lima-footer">--</strong>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+            <section id="analisis" class="dashboard-row row-analysis">
+                <article class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Monto y ticket por producto</h2>
+                        </div>
+                    </div>
+                    <div class="chart-container">
                         <canvas id="product-chart"></canvas>
                     </div>
                 </article>
 
+                <article class="panel panel-span-2">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Tasa promedio por producto y tipo de IFI</h2>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-mid">
+                        <canvas id="rate-chart"></canvas>
+                    </div>
+                </article>
+
                 <article class="panel">
                     <div class="panel-header">
                         <div>
-                            <span class="panel-kicker">GEOGRAFIA</span>
                             <h2>Top departamentos</h2>
                         </div>
                     </div>
@@ -149,7 +301,6 @@
                 <article class="panel">
                     <div class="panel-header">
                         <div>
-                            <span class="panel-kicker">INSTITUCIONES</span>
                             <h2>Top IFI por monto</h2>
                         </div>
                     </div>
@@ -159,18 +310,32 @@
                 </article>
             </section>
 
+            <section id="mapa" class="map-section">
+                <article class="panel panel-map">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Colocaciones por departamento</h2>
+                            <p class="panel-sub">Mapa geografico</p>
+                        </div>
+                        <span class="panel-hint">Coropleta por monto</span>
+                    </div>
+                    <div id="peru-map" class="map-container" aria-label="Mapa de Peru"></div>
+                    <div id="map-legend" class="map-legend"></div>
+                </article>
+            </section>
+
             <section id="detalle" class="panel detail-panel">
                 <div class="panel-header">
                     <div>
-                        <span class="panel-kicker">REGISTROS</span>
                         <h2>Detalle analitico</h2>
+                        <p class="panel-sub">Ultimos 100 registros</p>
                     </div>
-                    <span class="table-note">Ultimos 100 registros</span>
                 </div>
                 <div class="table-wrapper">
                     <table>
                         <thead>
                             <tr>
+                                <th>#</th>
                                 <th>Fecha</th>
                                 <th>Producto</th>
                                 <th>Departamento</th>

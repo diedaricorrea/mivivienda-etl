@@ -12,7 +12,8 @@ class WebApiTests(unittest.TestCase):
         response = self.client.get("/")
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b"Colocaciones Mivivienda 2024", response.data)
+        self.assertIn(b"Mivivienda", response.data)
+        self.assertIn(b"Colocaciones del periodo", response.data)
 
     def test_health_connects_to_database(self):
         response = self.client.get("/api/health")
@@ -28,6 +29,14 @@ class WebApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertGreater(payload["kpis"]["cantidad"], 0)
+        self.assertIn("crecimiento_mensual_pct", payload["kpis"])
+        self.assertIn("concentracion_lima_pct", payload["kpis"])
+        self.assertTrue(payload["mensual"])
+        self.assertTrue(payload["trimestres"])
+        self.assertTrue(payload["plazos"])
+        self.assertTrue(payload["tasas"])
+        self.assertTrue(payload["concentracion"])
+        self.assertTrue(payload["mapa"])
         self.assertEqual(
             payload["filtros_aplicados"],
             {"departamento": "LIMA", "producto": "NMIV"},
@@ -37,6 +46,10 @@ class WebApiTests(unittest.TestCase):
         )
         self.assertTrue(
             all(row["codigo_producto"] == "NMIV" for row in payload["detalle"])
+        )
+        self.assertEqual(
+            payload["concentracion"][0]["nombre"],
+            "LIMA",
         )
 
 

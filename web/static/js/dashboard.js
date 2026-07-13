@@ -1,4 +1,9 @@
 const charts = {};
+let peruMap = null;
+let peruLayer = null;
+let mapTiles = null;
+let latestDashboard = null;
+let latestMapRows = [];
 
 const currency = new Intl.NumberFormat("es-PE", {
     style: "currency",
@@ -8,13 +13,86 @@ const currency = new Intl.NumberFormat("es-PE", {
 const integer = new Intl.NumberFormat("es-PE", {
     maximumFractionDigits: 0,
 });
+const percent = new Intl.NumberFormat("es-PE", {
+    maximumFractionDigits: 2,
+    signDisplay: "exceptZero",
+});
 
 document.addEventListener("DOMContentLoaded", async () => {
+    initTheme();
     bindEvents();
     await checkHealth();
     await loadFilters();
     await loadDashboard();
 });
+
+function cssVar(name) {
+    return getComputedStyle(document.documentElement)
+        .getPropertyValue(name)
+        .trim();
+}
+
+function themeColors() {
+    return {
+        primary: cssVar("--chart-1"),
+        copper: cssVar("--chart-2"),
+        mint: cssVar("--chart-3"),
+        sky: cssVar("--chart-4"),
+        amber: cssVar("--chart-5"),
+        coral: cssVar("--chart-6"),
+        grid: cssVar("--chart-grid"),
+        text: cssVar("--chart-text"),
+        surface: cssVar("--surface") || "#12182a",
+        soft: [
+            cssVar("--chart-1"),
+            cssVar("--chart-2"),
+            cssVar("--chart-3"),
+            cssVar("--chart-4"),
+            cssVar("--chart-5"),
+            cssVar("--chart-6"),
+        ],
+        map: [
+            cssVar("--map-empty"),
+            cssVar("--map-1"),
+            cssVar("--map-2"),
+            cssVar("--map-3"),
+            cssVar("--map-4"),
+            cssVar("--map-5"),
+        ],
+    };
+}
+
+function initTheme() {
+    syncThemeLabel();
+    document.querySelector("#theme-toggle").addEventListener("click", async () => {
+        const next = currentTheme() === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem("mivivienda-theme", next);
+        syncThemeLabel();
+        if (latestDashboard) {
+            updateCharts(latestDashboard);
+        }
+        if (latestMapRows.length) {
+            await updateMap(latestMapRows, true);
+        }
+    });
+}
+
+function currentTheme() {
+    return document.documentElement.getAttribute("data-theme") || "dark";
+}
+
+function syncThemeLabel() {
+    const label = document.querySelector("#theme-toggle-label");
+    label.textContent = currentTheme() === "dark" ? "Modo claro" : "Modo oscuro";
+}
+
+function setText(id, value) {
+    const el = document.querySelector(`#${id}`);
+    if (el) {
+        el.textContent = value;
+    }
+}
 
 function bindEvents() {
     document
@@ -84,8 +162,11 @@ async function loadDashboard() {
             throw new Error("No se pudo consultar el dashboard");
         }
         const data = await response.json();
+        latestDashboard = data;
+        latestMapRows = data.mapa || [];
         updateKpis(data.kpis);
         updateCharts(data);
+        await updateMap(latestMapRows);
         updateTable(data.detalle);
     } catch (error) {
         showError(error.message);
@@ -103,68 +184,543 @@ function updateKpis(kpis) {
         currency.format(kpis.monto_promedio);
     document.querySelector("#kpi-tasa").textContent =
         `${Number(kpis.tasa_promedio).toFixed(2)}%`;
+
+    const growthEl = document.querySelector("#kpi-crecimiento");
+    const growthNote = document.querySelector("#kpi-crecimiento-note");
+    growthEl.classList.remove("positive", "negative");
+
+    if (kpis.crecimiento_mensual_pct === null || kpis.crecimiento_mensual_pct === undefined) {
+        growthEl.textContent = "N/D";
+        growthNote.textContent = "Sin mes comparable";
+    } else {
+        growthEl.textContent = `${percent.format(kpis.crecimiento_mensual_pct)}%`;
+        growthEl.classList.add(
+            kpis.crecimiento_mensual_pct >= 0 ? "positive" : "negative",
+        );
+        growthNote.textContent =
+            `${kpis.mes_actual || "Mes actual"} vs ${kpis.mes_anterior || "anterior"}`;
+    }
+
+    document.querySelector("#kpi-mejor-mes").textContent =
+        kpis.mejor_mes || "N/D";
+    document.querySelector("#kpi-mejor-mes-note").textContent = kpis.mejor_mes_monto
+        ? currency.format(kpis.mejor_mes_monto)
+        : "Mayor colocacion";
+
+    const nmiv = `${Number(kpis.participacion_nmiv_pct || 0).toFixed(1)}%`;
+    const lima = `${Number(kpis.concentracion_lima_pct || 0).toFixed(1)}%`;
+    document.querySelector("#kpi-nmiv").textContent = nmiv;
+    document.querySelector("#kpi-lima").textContent = lima;
+    setText("kpi-nmiv-footer", nmiv);
+    setText("kpi-lima-footer", lima);
 }
 
 function updateCharts(data) {
-    renderChart("monthly", "monthly-chart", {
-        type: "line",
-        data: {
-            labels: data.mensual.map((item) => item.mes_nombre),
-            datasets: [{
-                label: "Monto colocado",
-                data: data.mensual.map((item) => item.monto_total),
-                borderColor: "#1f6feb",
-                backgroundColor: "rgba(31, 111, 235, 0.12)",
-                fill: true,
-                tension: 0.35,
-                pointBackgroundColor: "#ffffff",
-                pointBorderColor: "#1f6feb",
-                pointBorderWidth: 2,
-                pointRadius: 4,
-            }],
-        },
-        options: chartOptions(false),
-    });
-
-    renderChart("product", "product-chart", {
-        type: "doughnut",
-        data: {
-            labels: data.productos.map((item) => item.nombre),
-            datasets: [{
-                data: data.productos.map((item) => item.cantidad),
-                backgroundColor: ["#1f6feb", "#23a6d5", "#18a999"],
-                borderColor: "#ffffff",
-                borderWidth: 4,
-            }],
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: "66%",
-            plugins: {
-                legend: {
-                    position: "bottom",
-                    labels: { usePointStyle: true, boxWidth: 8 },
-                },
-            },
-        },
-    });
-
+    const colors = themeColors();
+    renderMonthlyChart(data.mensual, colors);
+    renderQuarterChart(data.trimestres, colors);
+    renderConcentrationChart(data.concentracion, colors);
+    renderProductChart(data.productos, colors);
+    renderTermChart(data.plazos, colors);
+    renderRateChart(data.tasas, colors);
     renderHorizontalBar(
         "department",
         "department-chart",
         data.departamentos,
-        "#23a6d5",
+        colors.sky,
+        colors,
     );
     renderHorizontalBar(
         "ifi",
         "ifi-chart",
         data.instituciones,
-        "#18a999",
+        colors.mint,
+        colors,
     );
 }
 
-function renderHorizontalBar(key, canvasId, rows, color) {
+function baseChartOptions(colors, extra = {}) {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        color: colors.text,
+        ...extra,
+    };
+}
+
+function renderMonthlyChart(rows, colors) {
+    const maxMonto = Math.max(...rows.map((item) => item.monto_total || 0), 1);
+    const highlightIndex = rows.findIndex(
+        (item) => item.monto_total === maxMonto,
+    );
+
+    renderChart("monthly", "monthly-chart", {
+        type: "bar",
+        data: {
+            labels: rows.map((item) => item.mes_nombre),
+            datasets: [
+                {
+                    type: "bar",
+                    label: "Monto colocado",
+                    data: rows.map((item) => item.monto_total),
+                    backgroundColor: rows.map((_, index) =>
+                        index === highlightIndex ? colors.copper : colors.primary,
+                    ),
+                    borderRadius: 8,
+                    yAxisID: "y",
+                    order: 2,
+                },
+                {
+                    type: "line",
+                    label: "Cantidad de creditos",
+                    data: rows.map((item) => item.cantidad),
+                    borderColor: colors.coral,
+                    backgroundColor: colors.coral,
+                    borderWidth: 2.5,
+                    tension: 0.35,
+                    pointRadius: 3,
+                    pointBackgroundColor: colors.surface,
+                    pointBorderColor: colors.coral,
+                    pointBorderWidth: 2,
+                    yAxisID: "y1",
+                    order: 1,
+                },
+            ],
+        },
+        options: baseChartOptions(colors, {
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+                legend: {
+                    position: "top",
+                    labels: { usePointStyle: true, boxWidth: 8, color: colors.text },
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => {
+                            if (context.dataset.yAxisID === "y1") {
+                                return `${context.dataset.label}: ${integer.format(context.raw)}`;
+                            }
+                            return `${context.dataset.label}: ${currency.format(context.raw)}`;
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: colors.text },
+                },
+                y: {
+                    position: "left",
+                    grid: { color: colors.grid },
+                    ticks: {
+                        color: colors.text,
+                        callback: (value) => compactMoney(value),
+                    },
+                    title: {
+                        display: true,
+                        text: "Monto (S/)",
+                        color: colors.primary,
+                    },
+                },
+                y1: {
+                    position: "right",
+                    grid: { drawOnChartArea: false },
+                    ticks: {
+                        color: colors.text,
+                        callback: (value) => integer.format(value),
+                    },
+                    title: {
+                        display: true,
+                        text: "Creditos",
+                        color: colors.coral,
+                    },
+                },
+            },
+        }),
+    });
+}
+
+function renderQuarterChart(rows, colors) {
+    const maxMonto = Math.max(...rows.map((item) => item.monto_total || 0), 1);
+
+    renderChart("quarter", "quarter-chart", {
+        type: "bar",
+        data: {
+            labels: rows.map((item) => `T${item.trimestre}`),
+            datasets: [{
+                label: "Monto total",
+                data: rows.map((item) => item.monto_total),
+                backgroundColor: rows.map((item) =>
+                    item.monto_total === maxMonto ? colors.copper : colors.primary,
+                ),
+                borderRadius: 8,
+                barPercentage: 0.55,
+            }],
+        },
+        options: baseChartOptions(colors, {
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => currency.format(context.raw),
+                        afterLabel: (context) => {
+                            const row = rows[context.dataIndex];
+                            return `${integer.format(row.cantidad)} creditos`;
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: colors.text },
+                },
+                y: {
+                    grid: { color: colors.grid },
+                    ticks: {
+                        color: colors.text,
+                        callback: (value) => compactMoney(value),
+                    },
+                },
+            },
+        }),
+    });
+}
+
+function renderConcentrationChart(rows, colors) {
+    renderChart("concentration", "concentration-chart", {
+        type: "doughnut",
+        data: {
+            labels: rows.map((item) => item.nombre),
+            datasets: [{
+                data: rows.map((item) => item.monto_total),
+                backgroundColor: [colors.primary, colors.sky],
+                borderColor: colors.surface,
+                borderWidth: 3,
+            }],
+        },
+        options: baseChartOptions(colors, {
+            cutout: "68%",
+            plugins: {
+                legend: {
+                    position: "bottom",
+                    labels: { usePointStyle: true, boxWidth: 8, color: colors.text },
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => {
+                            const total = context.dataset.data.reduce(
+                                (sum, value) => sum + value,
+                                0,
+                            );
+                            const share = total
+                                ? ((context.raw / total) * 100).toFixed(1)
+                                : 0;
+                            return `${context.label}: ${currency.format(context.raw)} (${share}%)`;
+                        },
+                    },
+                },
+            },
+        }),
+    });
+}
+
+function renderProductChart(rows, colors) {
+    renderChart("product", "product-chart", {
+        type: "bar",
+        data: {
+            labels: rows.map((item) => item.nombre),
+            datasets: [
+                {
+                    label: "Monto total",
+                    data: rows.map((item) => item.monto_total),
+                    backgroundColor: colors.primary,
+                    borderRadius: 8,
+                    yAxisID: "y",
+                },
+                {
+                    label: "Ticket promedio",
+                    data: rows.map((item) => item.monto_promedio),
+                    backgroundColor: colors.mint,
+                    borderRadius: 8,
+                    yAxisID: "y1",
+                },
+            ],
+        },
+        options: baseChartOptions(colors, {
+            plugins: {
+                legend: {
+                    position: "top",
+                    labels: { usePointStyle: true, boxWidth: 8, color: colors.text },
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context) =>
+                            `${context.dataset.label}: ${currency.format(context.raw)}`,
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: colors.text },
+                },
+                y: {
+                    position: "left",
+                    grid: { color: colors.grid },
+                    ticks: {
+                        color: colors.text,
+                        callback: (value) => compactMoney(value),
+                    },
+                    title: {
+                        display: true,
+                        text: "Monto",
+                        color: colors.primary,
+                    },
+                },
+                y1: {
+                    position: "right",
+                    grid: { drawOnChartArea: false },
+                    ticks: {
+                        color: colors.text,
+                        callback: (value) => compactMoney(value),
+                    },
+                    title: {
+                        display: true,
+                        text: "Ticket",
+                        color: colors.mint,
+                    },
+                },
+            },
+        }),
+    });
+}
+
+function renderTermChart(rows, colors) {
+    renderChart("term", "term-chart", {
+        type: "bar",
+        data: {
+            labels: rows.map((item) => item.nombre),
+            datasets: [{
+                label: "Cantidad de creditos",
+                data: rows.map((item) => item.cantidad),
+                backgroundColor: rows.map(
+                    (_, index) => colors.soft[index % colors.soft.length],
+                ),
+                borderRadius: 8,
+            }],
+        },
+        options: baseChartOptions(colors, {
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => {
+                            const row = rows[context.dataIndex];
+                            return [
+                                `Creditos: ${integer.format(row.cantidad)}`,
+                                `Monto: ${currency.format(row.monto_total)}`,
+                                `Plazo prom.: ${row.plazo_promedio} meses`,
+                            ];
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: colors.text },
+                },
+                y: {
+                    grid: { color: colors.grid },
+                    ticks: {
+                        color: colors.text,
+                        callback: (value) => integer.format(value),
+                    },
+                },
+            },
+        }),
+    });
+}
+
+function renderRateChart(rows, colors) {
+    const products = [...new Set(rows.map((item) => item.producto))];
+    const tipos = [...new Set(rows.map((item) => item.tipo_ifi))];
+
+    const datasets = tipos.map((tipo, index) => ({
+        label: tipo,
+        data: products.map((producto) => {
+            const match = rows.find(
+                (item) => item.producto === producto && item.tipo_ifi === tipo,
+            );
+            return match ? match.tasa_promedio : null;
+        }),
+        backgroundColor: colors.soft[index % colors.soft.length],
+        borderRadius: 8,
+        barPercentage: 0.7,
+    }));
+
+    renderChart("rate", "rate-chart", {
+        type: "bar",
+        data: {
+            labels: products,
+            datasets,
+        },
+        options: baseChartOptions(colors, {
+            plugins: {
+                legend: {
+                    position: "top",
+                    labels: { usePointStyle: true, boxWidth: 8, color: colors.text },
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context) =>
+                            context.raw === null
+                                ? `${context.dataset.label}: sin datos`
+                                : `${context.dataset.label}: ${Number(context.raw).toFixed(2)}%`,
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: colors.text },
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: colors.grid },
+                    ticks: {
+                        color: colors.text,
+                        callback: (value) => `${value}%`,
+                    },
+                    title: {
+                        display: true,
+                        text: "Tasa promedio anual",
+                        color: colors.text,
+                    },
+                },
+            },
+        }),
+    });
+}
+
+async function updateMap(rows, forceTiles = false) {
+    const colors = themeColors();
+    const values = Object.fromEntries(
+        rows.map((item) => [normalizeName(item.nombre), item]),
+    );
+    const amounts = rows.map((item) => item.monto_total || 0);
+    const maxAmount = Math.max(...amounts, 1);
+    const tileUrl = currentTheme() === "dark"
+        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+
+    if (!peruMap) {
+        peruMap = L.map("peru-map", {
+            zoomControl: true,
+            scrollWheelZoom: false,
+        }).setView([-9.2, -75.0], 5);
+        mapTiles = L.tileLayer(tileUrl, {
+            attribution: "&copy; OpenStreetMap &copy; CARTO",
+            maxZoom: 12,
+        }).addTo(peruMap);
+    } else if (forceTiles && mapTiles) {
+        peruMap.removeLayer(mapTiles);
+        mapTiles = L.tileLayer(tileUrl, {
+            attribution: "&copy; OpenStreetMap &copy; CARTO",
+            maxZoom: 12,
+        }).addTo(peruMap);
+    }
+
+    if (peruLayer) {
+        peruMap.removeLayer(peruLayer);
+    }
+
+    const response = await fetch("/static/geo/peru_departamentos.geojson");
+    if (!response.ok) {
+        throw new Error("No se pudo cargar el mapa geografico");
+    }
+    const geojson = await response.json();
+
+    peruLayer = L.geoJSON(geojson, {
+        style: (feature) => {
+            const key = normalizeName(feature.properties.NOMBDEP);
+            const amount = values[key]?.monto_total || 0;
+            return {
+                fillColor: colorScale(amount, maxAmount, colors),
+                weight: 1,
+                opacity: 1,
+                color: colors.surface,
+                fillOpacity: amount > 0 ? 0.86 : 0.22,
+            };
+        },
+        onEachFeature: (feature, layer) => {
+            const key = normalizeName(feature.properties.NOMBDEP);
+            const row = values[key];
+            const label = feature.properties.NOMBDEP;
+            if (row) {
+                layer.bindTooltip(
+                    `<strong>${escapeHtml(label)}</strong><br>` +
+                    `Monto: ${currency.format(row.monto_total)}<br>` +
+                    `Creditos: ${integer.format(row.cantidad)}`,
+                    { sticky: true, className: "map-tooltip" },
+                );
+            } else {
+                layer.bindTooltip(
+                    `<strong>${escapeHtml(label)}</strong><br>Sin colocaciones`,
+                    { sticky: true, className: "map-tooltip" },
+                );
+            }
+        },
+    }).addTo(peruMap);
+
+    peruMap.invalidateSize();
+    window.setTimeout(() => peruMap && peruMap.invalidateSize(), 120);
+    renderMapLegend(maxAmount, colors);
+}
+
+window.addEventListener("resize", () => {
+    if (peruMap) {
+        peruMap.invalidateSize();
+    }
+});
+
+function colorScale(value, maxValue, colors) {
+    if (!value) {
+        return colors.map[0];
+    }
+    const ratio = value / maxValue;
+    if (ratio > 0.75) return colors.map[5];
+    if (ratio > 0.5) return colors.map[4];
+    if (ratio > 0.25) return colors.map[3];
+    if (ratio > 0.1) return colors.map[2];
+    return colors.map[1];
+}
+
+function renderMapLegend(maxAmount, colors) {
+    const legend = document.querySelector("#map-legend");
+    const steps = [
+        { label: "Sin datos", color: colors.map[0] },
+        { label: "Bajo", color: colors.map[1] },
+        { label: "Medio", color: colors.map[3] },
+        { label: "Alto", color: colors.map[4] },
+        { label: `Max ${compactMoney(maxAmount)}`, color: colors.map[5] },
+    ];
+    legend.innerHTML = steps
+        .map((step) => `<span><i style="background:${step.color}"></i>${step.label}</span>`)
+        .join("");
+}
+
+function normalizeName(value) {
+    return String(value || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toUpperCase()
+        .trim();
+}
+
+function renderHorizontalBar(key, canvasId, rows, color, colors) {
     renderChart(key, canvasId, {
         type: "bar",
         data: {
@@ -173,18 +729,16 @@ function renderHorizontalBar(key, canvasId, rows, color) {
                 label: "Monto total",
                 data: rows.map((item) => item.monto_total),
                 backgroundColor: color,
-                borderRadius: 6,
+                borderRadius: 8,
                 barThickness: 14,
             }],
         },
-        options: chartOptions(true),
+        options: chartOptions(true, colors),
     });
 }
 
-function chartOptions(horizontal) {
-    return {
-        responsive: true,
-        maintainAspectRatio: false,
+function chartOptions(horizontal, colors) {
+    return baseChartOptions(colors, {
         indexAxis: horizontal ? "y" : "x",
         plugins: {
             legend: { display: !horizontal },
@@ -196,16 +750,18 @@ function chartOptions(horizontal) {
         },
         scales: {
             x: {
-                grid: { color: "#eef2f7" },
+                grid: { color: colors.grid },
                 ticks: {
+                    color: colors.text,
                     callback: (value) => compactMoney(value),
                 },
             },
             y: {
-                grid: { display: !horizontal, color: "#eef2f7" },
+                grid: { display: !horizontal, color: colors.grid },
+                ticks: { color: colors.text },
             },
         },
-    };
+    });
 }
 
 function renderChart(key, canvasId, config) {
@@ -222,15 +778,16 @@ function updateTable(rows) {
     if (!rows.length) {
         body.innerHTML = `
             <tr>
-                <td colspan="8">No existen registros para estos filtros.</td>
+                <td colspan="9">No existen registros para estos filtros.</td>
             </tr>
         `;
         return;
     }
 
-    rows.forEach((row) => {
+    rows.forEach((row, index) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
+            <td>${index + 1}</td>
             <td>${escapeHtml(row.fecha_desembolso)}</td>
             <td>${escapeHtml(row.codigo_producto)}</td>
             <td>${escapeHtml(row.departamento)}</td>
@@ -238,7 +795,7 @@ function updateTable(rows) {
             <td>${escapeHtml(row.nombre_ifi)}</td>
             <td>${integer.format(row.plazo_meses)} meses</td>
             <td>${currency.format(row.monto_credito)}</td>
-            <td>${Number(row.tasa_interes).toFixed(2)}%</td>
+            <td><span class="badge-soft">${Number(row.tasa_interes).toFixed(2)}%</span></td>
         `;
         body.appendChild(tr);
     });

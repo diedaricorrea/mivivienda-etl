@@ -53,6 +53,7 @@ class DashboardService:
                 SELECT
                     mes_numero,
                     mes_nombre,
+                    SUM(cantidad_creditos) AS cantidad,
                     ROUND(SUM(monto_credito), 2) AS monto_total
                 FROM vw_creditos_analitica
                 {where_sql}
@@ -62,15 +63,18 @@ class DashboardService:
             "productos": f"""
                 SELECT
                     codigo_producto AS nombre,
-                    SUM(cantidad_creditos) AS cantidad
+                    SUM(cantidad_creditos) AS cantidad,
+                    ROUND(SUM(monto_credito), 2) AS monto_total,
+                    ROUND(AVG(monto_credito), 2) AS monto_promedio
                 FROM vw_creditos_analitica
                 {where_sql}
                 GROUP BY codigo_producto
-                ORDER BY cantidad DESC
+                ORDER BY monto_total DESC
             """,
             "departamentos": f"""
                 SELECT
                     departamento AS nombre,
+                    SUM(cantidad_creditos) AS cantidad,
                     ROUND(SUM(monto_credito), 2) AS monto_total
                 FROM vw_creditos_analitica
                 {where_sql}
@@ -78,15 +82,76 @@ class DashboardService:
                 ORDER BY monto_total DESC
                 LIMIT 10
             """,
-            "instituciones": f"""
+            "mapa": f"""
                 SELECT
-                    nombre_ifi AS nombre,
+                    departamento AS nombre,
+                    SUM(cantidad_creditos) AS cantidad,
                     ROUND(SUM(monto_credito), 2) AS monto_total
                 FROM vw_creditos_analitica
                 {where_sql}
-                GROUP BY nombre_ifi
+                GROUP BY departamento
+                ORDER BY monto_total DESC
+            """,
+            "instituciones": f"""
+                SELECT
+                    nombre_ifi AS nombre,
+                    tipo_ifi,
+                    SUM(cantidad_creditos) AS cantidad,
+                    ROUND(SUM(monto_credito), 2) AS monto_total
+                FROM vw_creditos_analitica
+                {where_sql}
+                GROUP BY nombre_ifi, tipo_ifi
                 ORDER BY monto_total DESC
                 LIMIT 10
+            """,
+            "trimestres": f"""
+                SELECT
+                    trimestre,
+                    SUM(cantidad_creditos) AS cantidad,
+                    ROUND(SUM(monto_credito), 2) AS monto_total
+                FROM vw_creditos_analitica
+                {where_sql}
+                GROUP BY trimestre
+                ORDER BY trimestre
+            """,
+            "plazos": f"""
+                SELECT
+                    categoria_plazo AS nombre,
+                    SUM(cantidad_creditos) AS cantidad,
+                    ROUND(SUM(monto_credito), 2) AS monto_total,
+                    ROUND(AVG(plazo_meses), 1) AS plazo_promedio
+                FROM vw_creditos_analitica
+                {where_sql}
+                GROUP BY categoria_plazo
+                ORDER BY MIN(plazo_meses)
+            """,
+            "tasas": f"""
+                SELECT
+                    codigo_producto AS producto,
+                    tipo_ifi,
+                    ROUND(AVG(tasa_interes), 2) AS tasa_promedio,
+                    SUM(cantidad_creditos) AS cantidad
+                FROM vw_creditos_analitica
+                {where_sql}
+                GROUP BY codigo_producto, tipo_ifi
+                ORDER BY codigo_producto, tipo_ifi
+            """,
+            "concentracion": f"""
+                SELECT
+                    CASE
+                        WHEN departamento = 'LIMA' THEN 'LIMA'
+                        ELSE 'RESTO DEL PAIS'
+                    END AS nombre,
+                    SUM(cantidad_creditos) AS cantidad,
+                    ROUND(SUM(monto_credito), 2) AS monto_total
+                FROM vw_creditos_analitica
+                {where_sql}
+                GROUP BY
+                    CASE
+                        WHEN departamento = 'LIMA' THEN 'LIMA'
+                        ELSE 'RESTO DEL PAIS'
+                    END
+                ORDER BY monto_total DESC
             """,
             "detalle": f"""
                 SELECT
@@ -108,23 +173,42 @@ class DashboardService:
         }
 
         with self.engine.connect() as connection:
-            kpis = connection.execute(
-                text(queries["kpis"]), params
-            ).mappings().one()
+            kpis = self._serialize_row(
+                connection.execute(text(queries["kpis"]), params).mappings().one()
+            )
+            mensual = self._fetch_rows(
+                connection, queries["mensual"], params
+            )
+            productos = self._fetch_rows(
+                connection, queries["productos"], params
+            )
+            concentracion = self._fetch_rows(
+                connection, queries["concentracion"], params
+            )
+
             response = {
-                "kpis": self._serialize_row(kpis),
-                "mensual": self._fetch_rows(
-                    connection, queries["mensual"], params
-                ),
-                "productos": self._fetch_rows(
-                    connection, queries["productos"], params
-                ),
+                "kpis": self._enrich_kpis(kpis, mensual, productos, concentracion),
+                "mensual": mensual,
+                "productos": productos,
                 "departamentos": self._fetch_rows(
                     connection, queries["departamentos"], params
+                ),
+                "mapa": self._fetch_rows(
+                    connection, queries["mapa"], params
                 ),
                 "instituciones": self._fetch_rows(
                     connection, queries["instituciones"], params
                 ),
+                "trimestres": self._fetch_rows(
+                    connection, queries["trimestres"], params
+                ),
+                "plazos": self._fetch_rows(
+                    connection, queries["plazos"], params
+                ),
+                "tasas": self._fetch_rows(
+                    connection, queries["tasas"], params
+                ),
+                "concentracion": concentracion,
                 "detalle": self._fetch_rows(
                     connection, queries["detalle"], params
                 ),
@@ -133,6 +217,61 @@ class DashboardService:
                 },
             }
         return response
+
+    @staticmethod
+    def _enrich_kpis(
+        kpis: dict,
+        mensual: list[dict],
+        productos: list[dict],
+        concentracion: list[dict],
+    ) -> dict:
+        enriched = dict(kpis)
+
+        if len(mensual) >= 2:
+            previous = mensual[-2]["monto_total"] or 0
+            current = mensual[-1]["monto_total"] or 0
+            if previous:
+                enriched["crecimiento_mensual_pct"] = round(
+                    ((current - previous) / previous) * 100, 2
+                )
+            else:
+                enriched["crecimiento_mensual_pct"] = None
+            enriched["mes_actual"] = mensual[-1]["mes_nombre"]
+            enriched["mes_anterior"] = mensual[-2]["mes_nombre"]
+        else:
+            enriched["crecimiento_mensual_pct"] = None
+            enriched["mes_actual"] = mensual[-1]["mes_nombre"] if mensual else None
+            enriched["mes_anterior"] = None
+
+        if mensual:
+            best = max(mensual, key=lambda row: row["monto_total"] or 0)
+            enriched["mejor_mes"] = best["mes_nombre"]
+            enriched["mejor_mes_monto"] = best["monto_total"]
+        else:
+            enriched["mejor_mes"] = None
+            enriched["mejor_mes_monto"] = 0
+
+        total_monto = enriched.get("monto_total") or 0
+        nmiv = next(
+            (row for row in productos if row["nombre"] == "NMIV"),
+            None,
+        )
+        lima = next(
+            (row for row in concentracion if row["nombre"] == "LIMA"),
+            None,
+        )
+
+        enriched["participacion_nmiv_pct"] = (
+            round((nmiv["monto_total"] / total_monto) * 100, 2)
+            if nmiv and total_monto
+            else 0
+        )
+        enriched["concentracion_lima_pct"] = (
+            round((lima["monto_total"] / total_monto) * 100, 2)
+            if lima and total_monto
+            else 0
+        )
+        return enriched
 
     @staticmethod
     def _build_where(filters: dict[str, str]) -> tuple[str, dict]:
