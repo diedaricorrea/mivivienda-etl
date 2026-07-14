@@ -93,7 +93,7 @@
 
         <label>
             Comparar con
-            <select id="anio_comp" title="Anio de referencia para deltas YoY">
+            <select id="anio_comp" title="Solo afecta deltas YoY bajo los KPI">
                 <option value="">Anio previo (auto)</option>
             </select>
         </label>
@@ -123,8 +123,9 @@
             Aplicar filtros
         </button>
         <p class="filter-help">
-            Periodo filtra el analisis. “Comparar con” define el anio de referencia
-            para los deltas YoY (por defecto, el anio previo).
+            <strong>Periodo</strong> filtra KPI, graficos y detalle.
+            <strong>Comparar con</strong> solo define el anio de referencia de los deltas YoY
+            (badges bajo los KPI e insight/IA de comparativo). No cambia el universo de los KPI.
         </p>
     </section>
     {% endif %}

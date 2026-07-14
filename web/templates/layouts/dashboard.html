@@ -59,6 +59,27 @@
         </main>
     </div>
 
+    <div id="kpi-ai-popover" class="kpi-ai-popover" hidden>
+        <button type="button" class="kpi-ai-backdrop" id="kpi-ai-backdrop" aria-label="Cerrar"></button>
+        <div class="kpi-ai-card" role="dialog" aria-modal="true" aria-labelledby="kpi-ai-title">
+            <header class="kpi-ai-card-header">
+                <div>
+                    <p class="kpi-ai-eyebrow">Asistencia IA</p>
+                    <strong id="kpi-ai-title">Indicador</strong>
+                </div>
+                <button type="button" id="kpi-ai-close" class="kpi-ai-close" aria-label="Cerrar">×</button>
+            </header>
+            <div id="kpi-ai-thinking" class="kpi-ai-thinking" hidden>
+                <span class="kpi-ai-dots" aria-hidden="true">
+                    <i></i><i></i><i></i>
+                </span>
+                <span>Pensando interpretacion...</span>
+            </div>
+            <pre id="kpi-ai-text" class="kpi-ai-text"></pre>
+            <p id="kpi-ai-note" class="panel-sub"></p>
+        </div>
+    </div>
+
     {% block scripts %}
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
     {% endblock %}

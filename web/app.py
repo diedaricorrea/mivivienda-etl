@@ -1,5 +1,6 @@
 from io import BytesIO, StringIO
 from pathlib import Path
+import json
 import sys
 from datetime import datetime
 
@@ -111,13 +112,63 @@ def interpretar():
     """Interpretacion asistida por OpenAI sobre datos ya calculados del DataMart."""
     from web.services.insights_service import interpret_with_openai
 
+    context, modulo, error = _interpret_context()
+    if error:
+        return error
+
+    try:
+        result = interpret_with_openai(context, modulo=modulo)
+        return jsonify(result)
+    except RuntimeError as err:
+        return jsonify({"error": str(err)}), 503
+    except Exception as err:
+        app.logger.exception("Error en interpretacion OpenAI", exc_info=err)
+        return jsonify({"error": "No se pudo generar la interpretacion con IA."}), 500
+
+
+@app.post("/api/interpretar/stream")
+def interpretar_stream():
+    """Misma interpretacion, pero en streaming SSE (efecto escritura progresiva)."""
+    from flask import Response, stream_with_context
+
+    from web.services.insights_service import stream_interpret_with_openai
+
+    context, modulo, error = _interpret_context()
+    if error:
+        return error
+
+    def event_stream():
+        try:
+            for event in stream_interpret_with_openai(context, modulo=modulo):
+                yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+        except Exception as err:
+            app.logger.exception("Error en streaming OpenAI", exc_info=err)
+            yield (
+                "data: "
+                + json.dumps(
+                    {"tipo": "error", "error": "No se pudo generar la interpretacion con IA."},
+                    ensure_ascii=False,
+                )
+                + "\n\n"
+            )
+
+    return Response(
+        stream_with_context(event_stream()),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+def _interpret_context():
     payload = request.get_json(silent=True) or {}
     modulo = str(payload.get("modulo") or "resumen").strip().lower()
     kpis = payload.get("kpis") or {}
     if not kpis:
-        return jsonify({"error": "Se requieren KPIs para interpretar."}), 400
+        return None, modulo, (jsonify({"error": "Se requieren KPIs para interpretar."}), 400)
 
-    # Solo reenviamos campos analiticos; nunca secretos ni prompts del cliente.
     allowed = (
         "filtros",
         "kpis",
@@ -132,17 +183,14 @@ def interpretar():
         "departamentos",
         "instituciones",
         "tasas",
+        "kpi_focus",
+        "chart_focus",
+        "serie",
+        "contexto_universo",
+        "resumen_serie",
     )
     context = {key: payload[key] for key in allowed if key in payload}
-
-    try:
-        result = interpret_with_openai(context, modulo=modulo)
-        return jsonify(result)
-    except RuntimeError as error:
-        return jsonify({"error": str(error)}), 503
-    except Exception as error:
-        app.logger.exception("Error en interpretacion OpenAI", exc_info=error)
-        return jsonify({"error": "No se pudo generar la interpretacion con IA."}), 500
+    return context, modulo, None
 
 
 @app.get("/api/export")

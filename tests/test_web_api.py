@@ -14,6 +14,7 @@ class WebApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Mivivienda", response.data)
         self.assertIn(b"Colocaciones del periodo", response.data)
+        self.assertIn(b"kpi-ai-btn", response.data)
         self.assertIn(b"Evolucion anual", response.data)
         self.assertIn(b"Monto y ticket por producto", response.data)
         self.assertIn(b"Detalle analitico", response.data)
@@ -56,6 +57,13 @@ class WebApiTests(unittest.TestCase):
         self.assertIn(b"Indicadores del dashboard", response.data)
         self.assertIn(b"Innovaciones analiticas e asistencia de IA", response.data)
         self.assertIn(b"gpt-4.1-mini", response.data)
+        self.assertIn(b"Como funciona la asistencia de IA", response.data)
+        self.assertIn(b"ia_yoy_deltas_2018_2024.png", response.data)
+        self.assertIn(b"Armado del JSON", response.data)
+        self.assertIn(b"kpi_focus", response.data)
+        self.assertIn(b"contexto_universo", response.data)
+        self.assertIn(b"resumen_serie", response.data)
+        self.assertIn(b"Guion breve para exposicion", response.data)
 
     def test_yoy_supports_custom_year_pair(self):
         response = self.client.get("/api/dashboard?anio=2024&anio_comp=2018")
@@ -78,6 +86,12 @@ class WebApiTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn("KPIs", response.get_json()["error"])
+
+        streamed = self.client.post(
+            "/api/interpretar/stream",
+            json={"modulo": "resumen"},
+        )
+        self.assertEqual(streamed.status_code, 400)
 
     def test_health_connects_to_database(self):
         response = self.client.get("/api/health")

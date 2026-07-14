@@ -613,6 +613,7 @@ class DashboardService:
             },
             "deltas": build_yoy_payload(current, previous),
             "etiqueta": f"{anio_previo} vs {anio_actual}",
+            "kpi_universo": "periodo" if filters.get("anio") else "todos_los_anios",
         }
 
     @staticmethod

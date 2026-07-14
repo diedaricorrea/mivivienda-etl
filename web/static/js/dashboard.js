@@ -154,6 +154,8 @@ function bindEvents() {
     bindExportMenu();
     bindMapBasemapToggle();
     bindAiInterpret();
+    bindKpiAi();
+    bindChartAi();
 }
 
 function bindCodeHelp() {
@@ -494,9 +496,17 @@ function updateYoy(yoy) {
     const label = yoy.etiqueta || `${yoy.anio_previo} vs ${yoy.anio_actual}`;
     if (banner) {
         banner.hidden = false;
-        const modo = yoy.modo === "manual" ? "comparacion elegida" : "anio previo automatico";
-        banner.textContent =
-            `Comparativo ${label} (${modo}). Deltas bajo cada KPI: periodo analizado vs anio de referencia (mismos filtros).`;
+        if (yoy.kpi_universo === "todos_los_anios") {
+            banner.textContent =
+                `Los KPI muestran todos los anios. Los badges YoY comparan solo ` +
+                `${label} (anio analizado ${yoy.anio_actual} vs referencia ${yoy.anio_previo}). ` +
+                `“Comparar con” no cambia el universo de los KPI; eso lo hace Periodo.`;
+        } else {
+            const modo = yoy.modo === "manual" ? "comparacion elegida" : "anio previo automatico";
+            banner.textContent =
+                `KPI del periodo ${yoy.anio_actual}. Deltas YoY ${label} (${modo}). ` +
+                `“Comparar con” solo afecta esos deltas y el insight/IA de comparativo.`;
+        }
     }
     if (chip) {
         chip.hidden = false;
@@ -575,6 +585,76 @@ function buildAiPayload() {
     return base;
 }
 
+async function streamInterpret(context, handlers = {}) {
+    const response = await fetch("/api/interpretar/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(context),
+    });
+    if (!response.ok) {
+        const raw = await response.text();
+        let payload = {};
+        try {
+            payload = raw ? JSON.parse(raw) : {};
+        } catch {
+            /* HTML 404 u otro */
+        }
+        throw new Error(
+            payload.error
+                || (response.status === 404
+                    ? "Endpoint de streaming no encontrado. Reinicia Flask."
+                    : `No se pudo interpretar con IA (HTTP ${response.status}).`),
+        );
+    }
+    if (!response.body) {
+        throw new Error("El navegador no soporta streaming de respuesta.");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let fullText = "";
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+            break;
+        }
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() || "";
+
+        for (const part of parts) {
+            const line = part
+                .split("\n")
+                .map((row) => row.trim())
+                .find((row) => row.startsWith("data:"));
+            if (!line) {
+                continue;
+            }
+            let event;
+            try {
+                event = JSON.parse(line.slice(5).trim());
+            } catch {
+                continue;
+            }
+            if (event.tipo === "meta") {
+                handlers.onMeta?.(event);
+            } else if (event.tipo === "delta") {
+                fullText += event.texto || "";
+                handlers.onDelta?.(fullText, event.texto || "");
+            } else if (event.tipo === "error") {
+                throw new Error(event.error || "Error en la interpretacion con IA");
+            }
+        }
+    }
+
+    if (!fullText.trim()) {
+        throw new Error("La IA no devolvio contenido util.");
+    }
+    return fullText;
+}
+
 function bindAiInterpret() {
     const button = document.querySelector("#ai-interpret");
     if (!button) {
@@ -592,52 +672,488 @@ function bindAiInterpret() {
         const noteEl = document.querySelector("#ai-insights-note");
         button.disabled = true;
         button.textContent = "Generando...";
+        if (box) {
+            box.hidden = false;
+        }
+        if (textEl) {
+            textEl.textContent = "";
+            textEl.classList.add("is-streaming");
+        }
+        if (modelEl) {
+            modelEl.textContent = "Escribiendo...";
+        }
+        if (noteEl) {
+            noteEl.textContent = "";
+        }
+
         try {
-            const response = await fetch("/api/interpretar", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(context),
+            await streamInterpret(context, {
+                onMeta(event) {
+                    const bits = [];
+                    if (event.modelo) {
+                        bits.push(`Modelo: ${event.modelo}`);
+                    }
+                    if (event.modulo) {
+                        bits.push(`Vista: ${event.modulo}`);
+                    }
+                    if (modelEl) {
+                        modelEl.textContent = bits.join(" · ") || "Escribiendo...";
+                    }
+                    if (noteEl) {
+                        noteEl.textContent = event.aviso || "";
+                    }
+                },
+                onDelta(fullText) {
+                    if (textEl) {
+                        textEl.textContent = fullText;
+                    }
+                },
             });
-            const raw = await response.text();
-            let payload = {};
-            try {
-                payload = raw ? JSON.parse(raw) : {};
-            } catch {
-                throw new Error(
-                    response.status === 404
-                        ? "Endpoint /api/interpretar no encontrado. Reinicia el servidor Flask."
-                        : `La IA no devolvio JSON (HTTP ${response.status}). Reinicia Flask y recarga la pagina.`,
-                );
-            }
-            if (!response.ok) {
-                throw new Error(payload.error || "No se pudo interpretar con IA");
-            }
-            if (box) {
-                box.hidden = false;
-            }
-            if (textEl) {
-                textEl.textContent = payload.texto || "";
-            }
-            if (modelEl) {
-                const bits = [];
-                if (payload.modelo) {
-                    bits.push(`Modelo: ${payload.modelo}`);
-                }
-                if (payload.modulo) {
-                    bits.push(`Vista: ${payload.modulo}`);
-                }
-                modelEl.textContent = bits.join(" · ");
-            }
-            if (noteEl) {
-                noteEl.textContent = payload.aviso || "";
-            }
         } catch (error) {
             showError(error.message);
+            if (box && !textEl?.textContent) {
+                box.hidden = true;
+            }
         } finally {
+            textEl?.classList.remove("is-streaming");
             button.disabled = false;
             button.textContent = "Explicar con IA";
         }
     });
+}
+
+let kpiAiIgnoreBackdropUntil = 0;
+
+function closeKpiAiPopover() {
+    const popover = document.querySelector("#kpi-ai-popover");
+    if (popover) {
+        popover.hidden = true;
+        popover.setAttribute("hidden", "");
+        popover.setAttribute("aria-hidden", "true");
+    }
+    document.querySelectorAll(".kpi-ai-btn.is-loading").forEach((btn) => {
+        btn.classList.remove("is-loading");
+    });
+}
+
+function openKpiAiPopover(anchor) {
+    const popover = document.querySelector("#kpi-ai-popover");
+    if (!popover) {
+        return;
+    }
+    // Evita clipping/z-index de contenedores del dashboard.
+    if (popover.parentElement !== document.body) {
+        document.body.appendChild(popover);
+    }
+    popover.hidden = false;
+    popover.removeAttribute("hidden");
+    popover.setAttribute("aria-hidden", "false");
+    // El mismo click que abre no debe cerrar por el backdrop.
+    kpiAiIgnoreBackdropUntil = Date.now() + 450;
+    positionKpiAiCard(anchor);
+}
+
+function positionKpiAiCard(anchor) {
+    const card = document.querySelector("#kpi-ai-popover .kpi-ai-card");
+    if (!card || !anchor) {
+        return;
+    }
+    const rect = anchor.getBoundingClientRect();
+    const width = Math.min(380, window.innerWidth - 24);
+    const margin = 10;
+    let left = rect.right + margin;
+    if (left + width > window.innerWidth - 12) {
+        left = Math.max(12, rect.left - width - margin);
+    }
+    let top = rect.top;
+    const estimatedHeight = Math.min(window.innerHeight * 0.7, 420);
+    if (top + estimatedHeight > window.innerHeight - 12) {
+        top = Math.max(12, window.innerHeight - estimatedHeight - 12);
+    }
+    card.style.width = `${width}px`;
+    card.style.left = `${left}px`;
+    card.style.top = `${top}px`;
+}
+
+function setThinkingVisible(thinkingEl, visible) {
+    if (!thinkingEl) {
+        return;
+    }
+    if (visible) {
+        thinkingEl.hidden = false;
+        thinkingEl.removeAttribute("hidden");
+    } else {
+        thinkingEl.hidden = true;
+        thinkingEl.setAttribute("hidden", "");
+    }
+}
+
+async function runAiPopover({
+    anchor,
+    title,
+    context,
+    loadingButton = null,
+}) {
+    const popover = document.querySelector("#kpi-ai-popover");
+    const titleEl = document.querySelector("#kpi-ai-title");
+    const thinkingEl = document.querySelector("#kpi-ai-thinking");
+    const textEl = document.querySelector("#kpi-ai-text");
+    const noteEl = document.querySelector("#kpi-ai-note");
+    if (!popover) {
+        return;
+    }
+
+    openKpiAiPopover(anchor);
+    loadingButton?.classList.add("is-loading");
+    if (titleEl) {
+        titleEl.textContent = title;
+    }
+    setThinkingVisible(thinkingEl, true);
+    if (textEl) {
+        textEl.textContent = "";
+        textEl.classList.add("is-streaming");
+    }
+    if (noteEl) {
+        noteEl.textContent = "";
+    }
+
+    try {
+        await streamInterpret(context, {
+            onMeta(meta) {
+                setThinkingVisible(thinkingEl, false);
+                if (noteEl) {
+                    noteEl.textContent = meta.aviso || "";
+                }
+            },
+            onDelta(fullText) {
+                setThinkingVisible(thinkingEl, false);
+                if (textEl) {
+                    textEl.textContent = fullText;
+                }
+            },
+        });
+    } catch (error) {
+        showError(error.message);
+        closeKpiAiPopover();
+    } finally {
+        textEl?.classList.remove("is-streaming");
+        loadingButton?.classList.remove("is-loading");
+        setThinkingVisible(thinkingEl, false);
+    }
+}
+
+function bindKpiAi() {
+    const popover = document.querySelector("#kpi-ai-popover");
+    if (!popover) {
+        return;
+    }
+
+    document.querySelector("#kpi-ai-close")?.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        closeKpiAiPopover();
+    });
+    document.querySelector("#kpi-ai-backdrop")?.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (Date.now() < kpiAiIgnoreBackdropUntil) {
+            return;
+        }
+        closeKpiAiPopover();
+    });
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !popover.hidden) {
+            closeKpiAiPopover();
+        }
+    });
+
+    document.querySelectorAll(".kpi-ai-btn").forEach((button) => {
+        button.addEventListener("click", async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (!latestDashboard?.kpis) {
+                showError("Aun no hay datos del dashboard para interpretar.");
+                return;
+            }
+
+            const kpiId = button.dataset.kpi;
+            const kpiLabel = button.dataset.label || kpiId;
+            const kpis = latestDashboard.kpis;
+            const yoy = latestDashboard.yoy || {};
+            const focused = {
+                [kpiId]: kpis[kpiId],
+            };
+            if (kpiId === "mejor_mes") {
+                focused.mejor_mes_monto = kpis.mejor_mes_monto;
+            }
+            if (kpiId === "crecimiento_mensual_pct") {
+                focused.mes_actual = kpis.mes_actual;
+                focused.mes_anterior = kpis.mes_anterior;
+            }
+
+            const insightsRelacionados = (latestDashboard.insights || [])
+                .filter((item) => insightMatchesKpi(kpiId, item))
+                .slice(0, 3);
+
+            await runAiPopover({
+                anchor: button,
+                title: kpiLabel,
+                loadingButton: button,
+                context: {
+                    modulo: "kpi",
+                    kpi_focus: {
+                        id: kpiId,
+                        label: kpiLabel,
+                        definicion: KPI_DEFINITIONS[kpiId] || kpiLabel,
+                        valor: kpis[kpiId],
+                        valor_formato: button
+                            .closest(".kpi-tile")
+                            ?.querySelector(".kpi-value")
+                            ?.textContent
+                            ?.trim() || String(kpis[kpiId] ?? ""),
+                        relacionados: focused,
+                        yoy_etiqueta: yoy.etiqueta || null,
+                        yoy_delta_relevante: pickYoyDeltaForKpi(kpiId, yoy.deltas || {}),
+                    },
+                    filtros: latestDashboard.filtros_aplicados || {},
+                    // Universo filtrado (contexto minimo) + foco del indicador.
+                    kpis: {
+                        ...focused,
+                        monto_total: kpis.monto_total,
+                        cantidad: kpis.cantidad,
+                        monto_promedio: kpis.monto_promedio,
+                        tasa_promedio: kpis.tasa_promedio,
+                    },
+                    contexto_universo: {
+                        monto_total: kpis.monto_total,
+                        cantidad: kpis.cantidad,
+                        monto_promedio: kpis.monto_promedio,
+                        tasa_promedio: kpis.tasa_promedio,
+                        participacion_nmiv_pct: kpis.participacion_nmiv_pct,
+                        concentracion_lima_pct: kpis.concentracion_lima_pct,
+                    },
+                    insights_reglas: insightsRelacionados,
+                    yoy: {
+                        available: yoy.available,
+                        etiqueta: yoy.etiqueta,
+                        anio_actual: yoy.anio_actual,
+                        anio_previo: yoy.anio_previo,
+                        modo: yoy.modo,
+                        deltas: pickYoyDeltaForKpi(kpiId, yoy.deltas || {}),
+                        actual: yoy.actual || null,
+                        previo: yoy.previo || null,
+                    },
+                },
+            });
+        });
+    });
+}
+
+const KPI_DEFINITIONS = {
+    monto_total: "Suma del capital colocado en el universo filtrado.",
+    cantidad: "Numero de creditos desembolsados en el universo filtrado.",
+    monto_promedio: "Ticket promedio = monto_total / cantidad.",
+    tasa_promedio: "Tasa de interes promedio ponderada del universo filtrado.",
+    crecimiento_mensual_pct: "Variacion porcentual del ultimo periodo comparable vs el anterior.",
+    mejor_mes: "Periodo (anio-mes) con mayor monto colocado dentro del universo filtrado.",
+    participacion_nmiv_pct: "Participacion de NMIV/NCMV sobre el monto total filtrado.",
+    concentracion_lima_pct: "Participacion de Lima sobre el monto total filtrado.",
+};
+
+function insightMatchesKpi(kpiId, item) {
+    const tipo = item?.tipo || "";
+    const map = {
+        monto_total: ["volumen", "yoy"],
+        cantidad: ["volumen", "yoy"],
+        monto_promedio: ["volumen", "yoy"],
+        tasa_promedio: ["volumen", "yoy"],
+        crecimiento_mensual_pct: ["tendencia", "yoy"],
+        mejor_mes: ["pico", "volumen"],
+        participacion_nmiv_pct: ["producto", "volumen"],
+        concentracion_lima_pct: ["geo", "alerta", "volumen"],
+    };
+    return (map[kpiId] || []).includes(tipo);
+}
+
+function pickYoyDeltaForKpi(kpiId, deltas) {
+    const map = {
+        monto_total: ["monto_total_pct"],
+        cantidad: ["cantidad_pct"],
+        monto_promedio: ["monto_promedio_pct"],
+        tasa_promedio: ["tasa_promedio_pct"],
+        participacion_nmiv_pct: ["participacion_nmiv_pct_pp"],
+        concentracion_lima_pct: ["concentracion_lima_pct_pp"],
+    };
+    const keys = map[kpiId];
+    if (!keys) {
+        return {};
+    }
+    const out = {};
+    keys.forEach((key) => {
+        if (deltas[key] != null) {
+            out[key] = deltas[key];
+        }
+    });
+    return out;
+}
+
+const CHART_AI_MAP = {
+    "annual-chart": {
+        id: "anual",
+        label: "Evolucion anual",
+        dataKey: "anual",
+        limit: 12,
+    },
+    "monthly-chart": {
+        id: "mensual",
+        label: "Tendencia mensual",
+        dataKey: "mensual",
+        limit: 24,
+    },
+    "quarter-chart": {
+        id: "trimestres",
+        label: "Monto por trimestre",
+        dataKey: "trimestres",
+        limit: 16,
+    },
+    "concentration-chart": {
+        id: "concentracion",
+        label: "Lima vs resto del pais",
+        dataKey: "concentracion",
+        limit: 8,
+    },
+    "term-chart": {
+        id: "plazos",
+        label: "Distribucion por plazo",
+        dataKey: "plazos",
+        limit: 12,
+    },
+    "product-chart": {
+        id: "productos",
+        label: "Monto y ticket por producto",
+        dataKey: "productos",
+        limit: 12,
+    },
+    "department-chart": {
+        id: "departamentos",
+        label: "Top departamentos",
+        dataKey: "departamentos",
+        limit: 10,
+    },
+    "ifi-chart": {
+        id: "instituciones",
+        label: "Top IFI por monto",
+        dataKey: "instituciones",
+        limit: 10,
+    },
+    "rate-chart": {
+        id: "tasas",
+        label: "Tasa promedio por producto e IFI",
+        dataKey: "tasas",
+        limit: 16,
+    },
+};
+
+function bindChartAi() {
+    if (!document.querySelector("#kpi-ai-popover")) {
+        return;
+    }
+
+    Object.entries(CHART_AI_MAP).forEach(([canvasId, meta]) => {
+        const canvas = document.querySelector(`#${canvasId}`);
+        if (!canvas) {
+            return;
+        }
+        const panel = canvas.closest(".panel");
+        const header = panel?.querySelector(".panel-header");
+        if (!header || header.querySelector(".chart-ai-btn")) {
+            return;
+        }
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "chart-ai-btn";
+        button.textContent = "IA";
+        button.title = `Interpretar ${meta.label} con IA`;
+        button.setAttribute("aria-label", `Interpretar ${meta.label} con IA`);
+        button.dataset.chart = meta.id;
+        header.appendChild(button);
+
+        button.addEventListener("click", async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (!latestDashboard) {
+                showError("Aun no hay datos del dashboard para interpretar.");
+                return;
+            }
+            const rows = latestDashboard[meta.dataKey] || [];
+            const serie = Array.isArray(rows) ? rows.slice(0, meta.limit) : rows;
+            await runAiPopover({
+                anchor: button,
+                title: meta.label,
+                loadingButton: button,
+                context: {
+                    modulo: "chart",
+                    chart_focus: {
+                        id: meta.id,
+                        label: meta.label,
+                        descripcion: `Serie '${meta.dataKey}' del universo filtrado.`,
+                    },
+                    filtros: latestDashboard.filtros_aplicados || {},
+                    kpis: {
+                        monto_total: latestDashboard.kpis?.monto_total,
+                        cantidad: latestDashboard.kpis?.cantidad,
+                        monto_promedio: latestDashboard.kpis?.monto_promedio,
+                        tasa_promedio: latestDashboard.kpis?.tasa_promedio,
+                        concentracion_lima_pct: latestDashboard.kpis?.concentracion_lima_pct,
+                        participacion_nmiv_pct: latestDashboard.kpis?.participacion_nmiv_pct,
+                    },
+                    yoy: {
+                        available: latestDashboard.yoy?.available,
+                        etiqueta: latestDashboard.yoy?.etiqueta,
+                        deltas: latestDashboard.yoy?.deltas || {},
+                    },
+                    resumen_serie: summarizeSerie(serie),
+                    serie,
+                },
+            });
+        });
+    });
+}
+
+function summarizeSerie(serie) {
+    if (!Array.isArray(serie) || !serie.length) {
+        return { n: 0 };
+    }
+    const withMonto = serie
+        .map((row) => ({
+            ...row,
+            _monto: Number(row.monto_total ?? row.monto ?? 0),
+        }))
+        .filter((row) => Number.isFinite(row._monto));
+    if (!withMonto.length) {
+        return { n: serie.length };
+    }
+    const sorted = [...withMonto].sort((a, b) => b._monto - a._monto);
+    const top = sorted[0];
+    const bottom = sorted[sorted.length - 1];
+    const total = withMonto.reduce((acc, row) => acc + row._monto, 0);
+    return {
+        n: serie.length,
+        monto_suma_serie: total,
+        max: {
+            etiqueta: top.nombre || top.periodo || top.anio || top.label || null,
+            monto_total: top._monto,
+        },
+        min: {
+            etiqueta: bottom.nombre || bottom.periodo || bottom.anio || bottom.label || null,
+            monto_total: bottom._monto,
+        },
+        top3: sorted.slice(0, 3).map((row) => ({
+            etiqueta: row.nombre || row.periodo || row.anio || row.label || null,
+            monto_total: row._monto,
+            cantidad: row.cantidad ?? null,
+        })),
+    };
 }
 
 function updateCharts(data) {

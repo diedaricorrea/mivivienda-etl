@@ -41,6 +41,7 @@
         </div>
         <div class="kpi-grid" aria-label="Indicadores principales">
             <article class="kpi-tile kpi-pink">
+                <button type="button" class="kpi-ai-btn" data-kpi="monto_total" data-label="Monto total" aria-label="Interpretar Monto total con IA" title="Interpretar con IA">IA</button>
                 <span class="kpi-icon" aria-hidden="true">$</span>
                 <strong id="kpi-total" class="kpi-value">--</strong>
                 <span class="kpi-label">Monto total</span>
@@ -48,6 +49,7 @@
                 <span id="kpi-total-yoy" class="kpi-yoy" hidden></span>
             </article>
             <article class="kpi-tile kpi-amber">
+                <button type="button" class="kpi-ai-btn" data-kpi="cantidad" data-label="Cantidad de creditos" aria-label="Interpretar Cantidad de creditos con IA" title="Interpretar con IA">IA</button>
                 <span class="kpi-icon" aria-hidden="true">#</span>
                 <strong id="kpi-cantidad" class="kpi-value">--</strong>
                 <span class="kpi-label">Cantidad de creditos</span>
@@ -55,6 +57,7 @@
                 <span id="kpi-cantidad-yoy" class="kpi-yoy" hidden></span>
             </article>
             <article class="kpi-tile kpi-green">
+                <button type="button" class="kpi-ai-btn" data-kpi="monto_promedio" data-label="Ticket promedio" aria-label="Interpretar Ticket promedio con IA" title="Interpretar con IA">IA</button>
                 <span class="kpi-icon" aria-hidden="true">≈</span>
                 <strong id="kpi-promedio" class="kpi-value">--</strong>
                 <span class="kpi-label">Ticket promedio</span>
@@ -62,6 +65,7 @@
                 <span id="kpi-promedio-yoy" class="kpi-yoy" hidden></span>
             </article>
             <article class="kpi-tile kpi-violet">
+                <button type="button" class="kpi-ai-btn" data-kpi="tasa_promedio" data-label="Tasa promedio" aria-label="Interpretar Tasa promedio con IA" title="Interpretar con IA">IA</button>
                 <span class="kpi-icon" aria-hidden="true">%</span>
                 <strong id="kpi-tasa" class="kpi-value">--</strong>
                 <span class="kpi-label">Tasa promedio</span>
@@ -69,22 +73,26 @@
                 <span id="kpi-tasa-yoy" class="kpi-yoy" hidden></span>
             </article>
             <article class="kpi-tile kpi-mint">
+                <button type="button" class="kpi-ai-btn" data-kpi="crecimiento_mensual_pct" data-label="Crecimiento periodo" aria-label="Interpretar Crecimiento periodo con IA" title="Interpretar con IA">IA</button>
                 <strong id="kpi-crecimiento" class="kpi-value">--</strong>
                 <span class="kpi-label">Crecimiento periodo</span>
                 <span id="kpi-crecimiento-note" class="kpi-note">Vs periodo anterior</span>
             </article>
             <article class="kpi-tile kpi-orange">
+                <button type="button" class="kpi-ai-btn" data-kpi="mejor_mes" data-label="Mejor periodo" aria-label="Interpretar Mejor periodo con IA" title="Interpretar con IA">IA</button>
                 <strong id="kpi-mejor-mes" class="kpi-value">--</strong>
                 <span class="kpi-label">Mejor periodo</span>
                 <span id="kpi-mejor-mes-note" class="kpi-note">Mayor colocacion</span>
             </article>
             <article class="kpi-tile kpi-sky">
+                <button type="button" class="kpi-ai-btn" data-kpi="participacion_nmiv_pct" data-label="Nuevo credito Mivivienda" aria-label="Interpretar participacion NMIV con IA" title="Interpretar con IA">IA</button>
                 <strong id="kpi-nmiv" class="kpi-value">--</strong>
                 <span class="kpi-label">Nuevo credito Mivivienda</span>
                 <span class="kpi-note">NMIV / NCMV sobre monto</span>
                 <span id="kpi-nmiv-yoy" class="kpi-yoy" hidden></span>
             </article>
             <article class="kpi-tile kpi-rose">
+                <button type="button" class="kpi-ai-btn" data-kpi="concentracion_lima_pct" data-label="Concentracion Lima" aria-label="Interpretar Concentracion Lima con IA" title="Interpretar con IA">IA</button>
                 <strong id="kpi-lima" class="kpi-value">--</strong>
                 <span class="kpi-label">Concentracion Lima</span>
                 <span class="kpi-note">Sobre monto total</span>
@@ -112,8 +120,7 @@
         <div>
             <h2>Interpretacion automatica</h2>
             <p class="panel-sub">
-                Hallazgos por reglas de negocio sobre el universo filtrado.
-                La IA interpreta esos indicadores para apoyar la decision.
+                Dos capas distintas: hallazgos por reglas (siempre) y lectura con IA (bajo demanda).
             </p>
         </div>
         <div class="insights-actions">
@@ -122,6 +129,18 @@
                 Explicar con IA
             </button>
         </div>
+    </div>
+    <div class="insights-explain">
+        <p>
+            <strong>Hallazgos por reglas:</strong> textos generados en el servidor con umbrales
+            fijos sobre los KPI del universo filtrado (volumen, Lima, producto, tendencia, pico y YoY).
+            No usan OpenAI. Si cambias filtros, se recalculan.
+        </p>
+        <p>
+            <strong>Explicar con IA:</strong> envia un JSON con esos mismos indicadores a
+            <code>gpt-4.1-mini</code> para redactar una sintesis. La IA no consulta MySQL ni
+            inventa cifras; solo interpreta el JSON de la pantalla.
+        </p>
     </div>
     <ul id="insights-list" class="insights-list"></ul>
     <div id="ai-insights" class="ai-insights" hidden>

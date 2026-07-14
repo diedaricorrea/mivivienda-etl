@@ -670,63 +670,197 @@
             <section class="panel about-block">
                 <h2>12. Innovaciones analiticas e asistencia de IA</h2>
                 <p class="about-lead">
-                    Ademas del tablero clasico, se incorporaron tres capacidades orientadas
-                    a acelerar la lectura gerencial sin sustituir el modelo dimensional ni
-                    la calidad del DataMart.
+                    Ademas de la visualizacion de indicadores, el dashboard incorpora una capa
+                    de interpretacion. Esta se compone de hallazgos automaticos por reglas,
+                    comparativo anual configurable y asistencia de lenguaje natural con OpenAI.
+                    En todos los casos, los valores numericos se calculan primero en el DataMart;
+                    la inteligencia artificial no recalcula MySQL ni sustituye al ETL.
                 </p>
 
-                <h3 class="about-subtitle">12.1 Insights automaticos por reglas</h3>
+                <h3 class="about-subtitle">12.1 Como funciona la asistencia de IA</h3>
                 <p>
-                    Sobre los KPIs ya calculados en MySQL se aplican reglas deterministas
-                    (umbrales de concentracion geografica, dominio de producto, senales de
-                    crecimiento/contraccion y comparativo anual). El resultado es una narrativa
-                    reproducible: mismos filtros → mismos hallazgos. No depende de un modelo
-                    probabilistico ni de una API externa.
+                    En terminos operativos, el flujo es el siguiente. Primero el dashboard
+                    consulta MySQL con los filtros activos (periodo, anio de comparacion,
+                    geografia, producto e IFI) y obtiene KPIs, series y rankings ya calculados.
+                    Despues, al pulsar <em>Explicar con IA</em> (vista completa), el boton
+                    <strong>IA</strong> de un KPI o el de un grafico, el frontend arma un
+                    <strong>JSON contextual</strong> y lo envia a
+                    <code>POST /api/interpretar/stream</code>. El backend reenvia ese JSON a
+                    OpenAI (<code>gpt-4.1-mini</code>) con un prompt que obliga a usar solo esos
+                    numeros. La IA <strong>no consulta la base de datos</strong>: interpreta el
+                    payload. Por eso respeta los filtros: el JSON ya trae el universo filtrado.
                 </p>
 
-                <h3 class="about-subtitle">12.2 Comparativo anual configurable</h3>
+                <ol class="ia-flow" aria-label="Flujo de interpretacion con IA">
+                    <li>
+                        <strong>1. Filtros → DataMart</strong>
+                        <span>
+                            El usuario aplica filtros. El backend calcula KPIs/series en MySQL
+                            sobre ese universo. Sin este paso no hay cifras que interpretar.
+                        </span>
+                    </li>
+                    <li>
+                        <strong>2. Armado del JSON</strong>
+                        <span>
+                            Segun el origen del clic se envia un payload distinto:
+                            vista completa (<code>modulo: resumen|tendencias|mapa|analisis</code>),
+                            un KPI (<code>modulo: kpi</code> + <code>kpi_focus</code>)
+                            o un grafico (<code>modulo: chart</code> + <code>serie</code>).
+                            Siempre incluye <code>filtros</code> aplicados.
+                        </span>
+                    </li>
+                    <li>
+                        <strong>3. API de interpretacion</strong>
+                        <span>
+                            <code>/api/interpretar/stream</code> valida el JSON, construye el
+                            prompt y llama a OpenAI en modo streaming.
+                        </span>
+                    </li>
+                    <li>
+                        <strong>4. Narrativa en pantalla</strong>
+                        <span>
+                            La respuesta llega por trozos (popover o panel) con interpretacion,
+                            contexto y recomendaciones, contrastable con el tablero.
+                        </span>
+                    </li>
+                </ol>
+
+                <div class="ia-json-example" aria-label="Ejemplos de JSON enviados a la IA">
+                    <p>
+                        El JSON no es “pobre” a proposito: se envia lo necesario para el foco
+                        (KPI o grafico), mas contexto del universo filtrado, YoY e insights
+                        relacionados. Asi la IA tiene suficiente material sin saturar el prompt.
+                    </p>
+                    <p><strong>Ejemplo A — KPI Concentracion Lima (payload enriquecido):</strong></p>
+<pre>{
+  "modulo": "kpi",
+  "filtros": {
+    "anio": "2024",
+    "anio_comp": "2021",
+    "departamento": "LIMA",
+    "producto": "NMIV"
+  },
+  "kpi_focus": {
+    "id": "concentracion_lima_pct",
+    "label": "Concentracion Lima",
+    "definicion": "Participacion de Lima sobre el monto total filtrado.",
+    "valor": 72.9,
+    "valor_formato": "72.9%",
+    "yoy_etiqueta": "2021 vs 2024",
+    "yoy_delta_relevante": { "concentracion_lima_pct_pp": 1.8 }
+  },
+  "contexto_universo": {
+    "cantidad": 4100,
+    "monto_total": 820000000,
+    "monto_promedio": 200000,
+    "tasa_promedio": 10.1,
+    "participacion_nmiv_pct": 97.2,
+    "concentracion_lima_pct": 72.9
+  },
+  "insights_reglas": [
+    {
+      "tipo": "alerta",
+      "titulo": "Alta concentracion geografica",
+      "texto": "Lima concentra 72.9% del monto colocado..."
+    }
+  ],
+  "yoy": {
+    "available": true,
+    "etiqueta": "2021 vs 2024",
+    "deltas": { "concentracion_lima_pct_pp": 1.8 }
+  }
+}</pre>
+
+                    <p style="margin-top:14px">
+                        <strong>Ejemplo B — grafico Top departamentos (con resumen de serie):</strong>
+                    </p>
+<pre>{
+  "modulo": "chart",
+  "filtros": { "anio": "2024", "anio_comp": "2021" },
+  "chart_focus": {
+    "id": "departamentos",
+    "label": "Top departamentos",
+    "descripcion": "Serie 'departamentos' del universo filtrado."
+  },
+  "kpis": {
+    "cantidad": 9336,
+    "monto_total": 1695883888.67,
+    "concentracion_lima_pct": 62.4
+  },
+  "resumen_serie": {
+    "n": 10,
+    "max": { "etiqueta": "LIMA", "monto_total": 1050000000 },
+    "min": { "etiqueta": "MADRE DE DIOS", "monto_total": 4200000 },
+    "top3": [
+      { "etiqueta": "LIMA", "monto_total": 1050000000 },
+      { "etiqueta": "AREQUIPA", "monto_total": 98000000 },
+      { "etiqueta": "LA LIBERTAD", "monto_total": 76000000 }
+    ]
+  },
+  "serie": [
+    { "nombre": "LIMA", "monto_total": 1050000000, "cantidad": 5200 },
+    { "nombre": "AREQUIPA", "monto_total": 98000000, "cantidad": 410 }
+  ]
+}</pre>
+                    <p class="panel-sub" style="margin-top:8px">
+                        <strong>Guion breve para exposicion:</strong>
+                        “Hay una API en el backend que recibe un JSON armado segun lo seleccionado
+                        en pantalla: filtros, definicion del KPI o resumen del grafico, contexto
+                        del universo y deltas YoY. Ese JSON se envia a la IA para que lo analice.
+                        La IA no recalcula MySQL; solo redacta sobre datos ya filtrados del DataMart.”
+                    </p>
+                </div>
+
+                <h3 class="about-subtitle">12.2 Insights automaticos por reglas</h3>
                 <p>
-                    El filtro <strong>Periodo</strong> define el universo analizado; el filtro
-                    <strong>Comparar con</strong> elige el anio de referencia para los deltas
-                    (por ejemplo 2018 vs 2024 o 2018 vs 2019). Si no se elige referencia, el
-                    sistema usa el anio previo automaticamente. Los porcentajes se calculan
-                    en el backend con dos snapshots de KPI bajo los mismos filtros de
-                    geografia, producto e IFI.
+                    En paralelo a la IA, el backend aplica reglas deterministicas sobre los KPI
+                    (concentracion geografica, dominio de producto, senales de variacion,
+                    pico del periodo y delta anual). Mismos filtros producen los mismos hallazgos.
+                    Al cambiar el anio de comparacion, el insight YoY se actualiza junto con los
+                    deltas de los KPI; el resto de hallazgos puede permanecer estable si el
+                    periodo analizado no cambio.
                 </p>
 
-                <h3 class="about-subtitle">12.3 Lectura asistida por IA (gpt-4.1-mini)</h3>
+                <h3 class="about-subtitle">12.3 Comparativo anual configurable</h3>
                 <p>
-                    El boton <em>Explicar con IA</em> (en Resumen, Tendencias, Mapa y Analisis)
-                    envia al modelo un JSON acotado a la vista activa: KPIs, YoY e indicadores
-                    contextuales (series, ranking departamental, mix de productos, etc.).
-                    La IA <strong>no recalcula</strong> ni inventa cifras: solo redacta una
-                    interpretacion orientada a decision a partir de numeros ya auditables
-                    en el DataMart.
+                    El filtro <strong>Periodo</strong> define el anio analizado y
+                    <strong>Comparar con</strong> define la referencia (por ejemplo 2018 vs 2024).
+                    Si la referencia queda vacia, se usa el anio previo. El sistema calcula dos
+                    instantaneas de KPI con los mismos filtros de geografia/producto/IFI y publica
+                    las variaciones porcentuales.
                 </p>
 
-                <h3 class="about-subtitle">12.4 Por que vale la pena para la toma de decisiones</h3>
+                <figure class="evidence-figure evidence-figure-wide">
+                    <img
+                        src="{{ url_for('static', filename='img/evidencias/ia_yoy_deltas_2018_2024.png') }}"
+                        alt="Variacion porcentual nacional 2018 versus 2024"
+                        loading="lazy"
+                    >
+                    <figcaption>
+                        <strong>Figura 4.</strong> Variacion porcentual nacional 2018 → 2024
+                        (cantidad, monto, ticket y tasa), calculada desde
+                        <code>vw_creditos_analitica</code>. Ilustra el mismo tipo de delta que
+                        expone el dashboard al combinar Periodo y Comparar con.
+                    </figcaption>
+                </figure>
+
+                <h3 class="about-subtitle">12.4 Contribucion a la toma de decisiones</h3>
                 <ul class="about-list">
                     <li>
-                        <strong>Reduce friccion cognitiva:</strong> convierte tablas y graficos
-                        en una lectura breve que un analista o un decisior puede contrastar
-                        de inmediato con el tablero.
+                        <strong>Acelera la lectura gerencial:</strong> convierte indicadores
+                        dispersos en una sintesis breve verificable en pantalla.
                     </li>
                     <li>
-                        <strong>Mantiene gobernanza de datos:</strong> la verdad numerica sigue
-                        en MySQL y en las reglas; la IA es una capa de lenguaje, no de
-                        prediccion ni de sustitucion del ETL.
+                        <strong>Preserva gobernanza de datos:</strong> la fuente de verdad
+                        permanece en MySQL; la IA es capa de lenguaje.
                     </li>
                     <li>
-                        <strong>Contextualiza por modulo:</strong> la misma asistencia se adapta
-                        a tendencias, mapa o analisis, alineando el mensaje al proposito de
-                        cada vista BI.
+                        <strong>Se adapta por modulo:</strong> el JSON cambia segun Resumen,
+                        Tendencias, Mapa o Analisis.
                     </li>
                     <li>
-                        <strong>Limite explicito:</strong> no se implemento un modulo de
-                        prediccion con IA porque, con series anuales cortas, un LLM no aporta
-                        un forecast confiable; eso exigiria modelos estadisticos/ML con
-                        validacion. Aqui la IA apoya el <em>analisis descriptivo y diagnostico</em>,
-                        que es donde aporta mas valor en un proyecto academico de BI.
+                        <strong>Delimita el alcance:</strong> no se presenta como sistema
+                        predictivo; un forecast exigiria modelos estadisticos con validacion.
                     </li>
                 </ul>
             </section>
