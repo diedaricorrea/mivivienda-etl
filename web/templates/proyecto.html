@@ -661,44 +661,111 @@
                         concentracion territorial (p. ej. Lima) y por linea (NMIV/NCMV, FCTP, MT, SCRC).
                     </li>
                     <li>
-                        <strong>Decision:</strong> los filtros compartidos (periodo, geografia,
-                        producto, tipo IFI) mantienen un universo coherente entre vistas.
+                        <strong>Decision:</strong> los filtros compartidos (periodo, comparacion anual,
+                        geografia, producto, tipo IFI) mantienen un universo coherente entre vistas.
                     </li>
                 </ol>
             </section>
 
+            <section class="panel about-block">
+                <h2>12. Innovaciones analiticas e asistencia de IA</h2>
+                <p class="about-lead">
+                    Ademas del tablero clasico, se incorporaron tres capacidades orientadas
+                    a acelerar la lectura gerencial sin sustituir el modelo dimensional ni
+                    la calidad del DataMart.
+                </p>
+
+                <h3 class="about-subtitle">12.1 Insights automaticos por reglas</h3>
+                <p>
+                    Sobre los KPIs ya calculados en MySQL se aplican reglas deterministas
+                    (umbrales de concentracion geografica, dominio de producto, senales de
+                    crecimiento/contraccion y comparativo anual). El resultado es una narrativa
+                    reproducible: mismos filtros → mismos hallazgos. No depende de un modelo
+                    probabilistico ni de una API externa.
+                </p>
+
+                <h3 class="about-subtitle">12.2 Comparativo anual configurable</h3>
+                <p>
+                    El filtro <strong>Periodo</strong> define el universo analizado; el filtro
+                    <strong>Comparar con</strong> elige el anio de referencia para los deltas
+                    (por ejemplo 2018 vs 2024 o 2018 vs 2019). Si no se elige referencia, el
+                    sistema usa el anio previo automaticamente. Los porcentajes se calculan
+                    en el backend con dos snapshots de KPI bajo los mismos filtros de
+                    geografia, producto e IFI.
+                </p>
+
+                <h3 class="about-subtitle">12.3 Lectura asistida por IA (gpt-4.1-mini)</h3>
+                <p>
+                    El boton <em>Explicar con IA</em> (en Resumen, Tendencias, Mapa y Analisis)
+                    envia al modelo un JSON acotado a la vista activa: KPIs, YoY e indicadores
+                    contextuales (series, ranking departamental, mix de productos, etc.).
+                    La IA <strong>no recalcula</strong> ni inventa cifras: solo redacta una
+                    interpretacion orientada a decision a partir de numeros ya auditables
+                    en el DataMart.
+                </p>
+
+                <h3 class="about-subtitle">12.4 Por que vale la pena para la toma de decisiones</h3>
+                <ul class="about-list">
+                    <li>
+                        <strong>Reduce friccion cognitiva:</strong> convierte tablas y graficos
+                        en una lectura breve que un analista o un decisior puede contrastar
+                        de inmediato con el tablero.
+                    </li>
+                    <li>
+                        <strong>Mantiene gobernanza de datos:</strong> la verdad numerica sigue
+                        en MySQL y en las reglas; la IA es una capa de lenguaje, no de
+                        prediccion ni de sustitucion del ETL.
+                    </li>
+                    <li>
+                        <strong>Contextualiza por modulo:</strong> la misma asistencia se adapta
+                        a tendencias, mapa o analisis, alineando el mensaje al proposito de
+                        cada vista BI.
+                    </li>
+                    <li>
+                        <strong>Limite explicito:</strong> no se implemento un modulo de
+                        prediccion con IA porque, con series anuales cortas, un LLM no aporta
+                        un forecast confiable; eso exigiria modelos estadisticos/ML con
+                        validacion. Aqui la IA apoya el <em>analisis descriptivo y diagnostico</em>,
+                        que es donde aporta mas valor en un proyecto academico de BI.
+                    </li>
+                </ul>
+            </section>
+
             <section class="dashboard-row row-about">
                 <article class="panel">
-                    <h2>12. Conclusiones</h2>
+                    <h2>13. Conclusiones</h2>
                     <ul class="about-list">
                         <li>Se demostro el flujo completo fuente → ETL → modelo estrella → dashboard.</li>
                         <li>El DataMart multi-anio queda trazable mediante <code>etl_ejecucion</code> y pruebas automatizadas.</li>
                         <li>La capa BI traduce hechos dimensionales en indicadores orientados a decision.</li>
+                        <li>La asistencia de IA acelera la interpretacion sin romper la trazabilidad numerica del DataMart.</li>
                     </ul>
                 </article>
                 <article class="panel">
-                    <h2>13. Lineas de mejora</h2>
+                    <h2>14. Lineas de mejora</h2>
                     <ul class="about-list">
                         <li>Incorporar dimensiones adicionales (canal, moneda o segmento de vivienda).</li>
                         <li>Automatizar monitoreo periodico de calidad de datos.</li>
                         <li>Evaluar publicacion hacia herramientas corporativas (p. ej. Power BI).</li>
+                        <li>Si se requiere forecast, evaluar modelos clasicos (regresion/series) con holdout, no solo LLM.</li>
                     </ul>
                 </article>
             </section>
 
             <section class="dashboard-row row-about">
                 <article class="panel">
-                    <h2>14. Uso del dashboard</h2>
+                    <h2>15. Uso del dashboard</h2>
                     <ol class="about-list about-ol">
                         <li>Abrir <code>http://127.0.0.1:5000</code>.</li>
                         <li>Verificar el estado de conexion MySQL.</li>
-                        <li>Aplicar filtros de periodo, geografia, producto y tipo de IFI.</li>
+                        <li>Aplicar filtros de periodo, anio de comparacion, geografia, producto y tipo de IFI.</li>
                         <li>Navegar Resumen, Tendencias, Mapa, Analisis y Detalle.</li>
+                        <li>Revisar insights automaticos y, si aplica, usar <em>Explicar con IA</em> por vista.</li>
                         <li>Exportar evidencias en Excel o CSV segun se requiera.</li>
                     </ol>
                 </article>
                 <article class="panel">
-                    <h2>15. Documentacion de referencia</h2>
+                    <h2>16. Documentacion de referencia</h2>
                     <ul class="about-list">
                         <li><code>README.md</code> — instalacion y arquitectura</li>
                         <li><code>sql/02_datamart.sql</code> — modelo estrella</li>

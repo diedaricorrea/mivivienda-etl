@@ -45,24 +45,28 @@
                 <strong id="kpi-total" class="kpi-value">--</strong>
                 <span class="kpi-label">Monto total</span>
                 <span class="kpi-note">Capital colocado</span>
+                <span id="kpi-total-yoy" class="kpi-yoy" hidden></span>
             </article>
             <article class="kpi-tile kpi-amber">
                 <span class="kpi-icon" aria-hidden="true">#</span>
                 <strong id="kpi-cantidad" class="kpi-value">--</strong>
                 <span class="kpi-label">Cantidad de creditos</span>
                 <span class="kpi-note">Operaciones desembolsadas</span>
+                <span id="kpi-cantidad-yoy" class="kpi-yoy" hidden></span>
             </article>
             <article class="kpi-tile kpi-green">
                 <span class="kpi-icon" aria-hidden="true">≈</span>
                 <strong id="kpi-promedio" class="kpi-value">--</strong>
                 <span class="kpi-label">Ticket promedio</span>
                 <span class="kpi-note">Por cada credito</span>
+                <span id="kpi-promedio-yoy" class="kpi-yoy" hidden></span>
             </article>
             <article class="kpi-tile kpi-violet">
                 <span class="kpi-icon" aria-hidden="true">%</span>
                 <strong id="kpi-tasa" class="kpi-value">--</strong>
                 <span class="kpi-label">Tasa promedio</span>
                 <span class="kpi-note">Promedio del periodo</span>
+                <span id="kpi-tasa-yoy" class="kpi-yoy" hidden></span>
             </article>
             <article class="kpi-tile kpi-mint">
                 <strong id="kpi-crecimiento" class="kpi-value">--</strong>
@@ -78,13 +82,16 @@
                 <strong id="kpi-nmiv" class="kpi-value">--</strong>
                 <span class="kpi-label">Nuevo credito Mivivienda</span>
                 <span class="kpi-note">NMIV / NCMV sobre monto</span>
+                <span id="kpi-nmiv-yoy" class="kpi-yoy" hidden></span>
             </article>
             <article class="kpi-tile kpi-rose">
                 <strong id="kpi-lima" class="kpi-value">--</strong>
                 <span class="kpi-label">Concentracion Lima</span>
                 <span class="kpi-note">Sobre monto total</span>
+                <span id="kpi-lima-yoy" class="kpi-yoy" hidden></span>
             </article>
         </div>
+        <p id="yoy-banner" class="yoy-banner" hidden></p>
     </article>
 
     <article id="mapa-panel" class="panel panel-map">
@@ -98,6 +105,33 @@
         <div id="peru-map" class="map-container" aria-label="Mapa de Peru"></div>
         <div id="map-legend" class="map-legend"></div>
     </article>
+</section>
+
+<section id="insights-panel" class="panel insights-panel" aria-label="Interpretacion analitica">
+    <div class="panel-header">
+        <div>
+            <h2>Interpretacion automatica</h2>
+            <p class="panel-sub">
+                Hallazgos por reglas de negocio sobre el universo filtrado.
+                La IA interpreta esos indicadores para apoyar la decision.
+            </p>
+        </div>
+        <div class="insights-actions">
+            <span id="yoy-chip" class="insights-chip" hidden></span>
+            <button id="ai-interpret" class="chip-outline" type="button">
+                Explicar con IA
+            </button>
+        </div>
+    </div>
+    <ul id="insights-list" class="insights-list"></ul>
+    <div id="ai-insights" class="ai-insights" hidden>
+        <div class="ai-insights-header">
+            <strong>Lectura asistida por IA</strong>
+            <small id="ai-insights-model"></small>
+        </div>
+        <pre id="ai-insights-text" class="ai-insights-text"></pre>
+        <p id="ai-insights-note" class="panel-sub"></p>
+    </div>
 </section>
 
 <section id="tendencias" class="dashboard-row row-trend">

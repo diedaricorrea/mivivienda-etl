@@ -7,7 +7,7 @@ let latestDashboard = null;
 let latestMapRows = [];
 let detailPage = 1;
 const DETAIL_PAGE_SIZE = 50;
-const FILTER_IDS = ["anio", "departamento", "producto", "tipo_ifi"];
+const FILTER_IDS = ["anio", "anio_comp", "departamento", "producto", "tipo_ifi"];
 const FILTER_STORAGE_KEY = "mivivienda-bi-filters";
 const MAP_BASE_STORAGE_KEY = "mivivienda-map-base";
 const MODULE = document.body?.dataset?.module || "resumen";
@@ -153,6 +153,7 @@ function bindEvents() {
 
     bindExportMenu();
     bindMapBasemapToggle();
+    bindAiInterpret();
 }
 
 function bindCodeHelp() {
@@ -327,6 +328,7 @@ async function loadFilters() {
         }
         const data = await response.json();
         populateSelect("anio", data.anios || []);
+        populateSelect("anio_comp", data.anios || []);
         populateSelect("departamento", data.departamentos);
         populateSelect("producto", data.productos);
         populateSelect("tipo_ifi", data.tipos_ifi);
@@ -375,6 +377,8 @@ async function loadDashboard(options = {}) {
             setText("period-badge", String(data.filtros_aplicados.anio));
         }
         updateKpis(data.kpis);
+        updateYoy(data.yoy);
+        updateInsights(data.insights || []);
         updateCharts(data);
         await updateMap(latestMapRows);
         updateTable(data.detalle, data.detalle_meta);
@@ -432,6 +436,208 @@ function updateKpis(kpis) {
     setText("kpi-lima", lima);
     setText("kpi-nmiv-footer", nmiv);
     setText("kpi-lima-footer", lima);
+}
+
+function formatYoyDelta(value, { points = false } = {}) {
+    if (value === null || value === undefined || Number.isNaN(Number(value))) {
+        return null;
+    }
+    const num = Number(value);
+    const sign = num > 0 ? "+" : "";
+    const suffix = points ? " pp" : "%";
+    return `${sign}${num.toFixed(1)}${suffix}`;
+}
+
+function setYoyDelta(id, value, { points = false } = {}) {
+    const el = document.querySelector(`#${id}`);
+    if (!el) {
+        return;
+    }
+    const text = formatYoyDelta(value, { points });
+    if (!text) {
+        el.hidden = true;
+        el.textContent = "";
+        el.classList.remove("positive", "negative");
+        return;
+    }
+    el.hidden = false;
+    el.textContent = text;
+    el.classList.toggle("positive", Number(value) > 0);
+    el.classList.toggle("negative", Number(value) < 0);
+}
+
+function updateYoy(yoy) {
+    const banner = document.querySelector("#yoy-banner");
+    const chip = document.querySelector("#yoy-chip");
+    if (!yoy?.available) {
+        ["kpi-total-yoy", "kpi-cantidad-yoy", "kpi-promedio-yoy", "kpi-tasa-yoy", "kpi-nmiv-yoy", "kpi-lima-yoy"]
+            .forEach((id) => setYoyDelta(id, null));
+        if (banner) {
+            banner.hidden = true;
+            banner.textContent = "";
+        }
+        if (chip) {
+            chip.hidden = true;
+            chip.textContent = "";
+        }
+        return;
+    }
+
+    const deltas = yoy.deltas || {};
+    setYoyDelta("kpi-total-yoy", deltas.monto_total_pct);
+    setYoyDelta("kpi-cantidad-yoy", deltas.cantidad_pct);
+    setYoyDelta("kpi-promedio-yoy", deltas.monto_promedio_pct);
+    setYoyDelta("kpi-tasa-yoy", deltas.tasa_promedio_pct);
+    setYoyDelta("kpi-nmiv-yoy", deltas.participacion_nmiv_pct_pp, { points: true });
+    setYoyDelta("kpi-lima-yoy", deltas.concentracion_lima_pct_pp, { points: true });
+
+    const label = yoy.etiqueta || `${yoy.anio_previo} vs ${yoy.anio_actual}`;
+    if (banner) {
+        banner.hidden = false;
+        const modo = yoy.modo === "manual" ? "comparacion elegida" : "anio previo automatico";
+        banner.textContent =
+            `Comparativo ${label} (${modo}). Deltas bajo cada KPI: periodo analizado vs anio de referencia (mismos filtros).`;
+    }
+    if (chip) {
+        chip.hidden = false;
+        chip.textContent = `YoY ${label}`;
+    }
+}
+
+function updateInsights(insights) {
+    const list = document.querySelector("#insights-list");
+    if (!list) {
+        return;
+    }
+    if (!insights?.length) {
+        list.innerHTML = "<li>No hay hallazgos para el universo filtrado.</li>";
+        return;
+    }
+    list.innerHTML = insights
+        .map(
+            (item) => `
+            <li data-tipo="${escapeHtml(item.tipo || "")}">
+                <strong>${escapeHtml(item.titulo || "Hallazgo")}</strong>
+                <span>${escapeHtml(item.texto || "")}</span>
+            </li>
+        `,
+        )
+        .join("");
+}
+
+function buildAiPayload() {
+    const data = latestDashboard;
+    if (!data?.kpis) {
+        return null;
+    }
+
+    const base = {
+        modulo: MODULE,
+        filtros: data.filtros_aplicados || {},
+        kpis: data.kpis,
+        yoy: data.yoy || {},
+        insights_reglas: data.insights || [],
+    };
+
+    if (MODULE === "tendencias") {
+        return {
+            ...base,
+            anual: data.anual || [],
+            mensual: (data.mensual || []).slice(-24),
+            trimestres: data.trimestres || [],
+        };
+    }
+
+    if (MODULE === "mapa") {
+        const top = [...(data.mapa || [])]
+            .sort((a, b) => Number(b.monto_total || 0) - Number(a.monto_total || 0))
+            .slice(0, 10);
+        return {
+            ...base,
+            top_departamentos: top,
+            concentracion: data.concentracion || [],
+            insights_reglas: (data.insights || []).filter((item) =>
+                ["geo", "alerta", "volumen", "yoy"].includes(item.tipo),
+            ),
+        };
+    }
+
+    if (MODULE === "analisis") {
+        return {
+            ...base,
+            productos: data.productos || [],
+            departamentos: (data.departamentos || []).slice(0, 10),
+            instituciones: (data.instituciones || []).slice(0, 10),
+            tasas: data.tasas || [],
+        };
+    }
+
+    return base;
+}
+
+function bindAiInterpret() {
+    const button = document.querySelector("#ai-interpret");
+    if (!button) {
+        return;
+    }
+    button.addEventListener("click", async () => {
+        const context = buildAiPayload();
+        if (!context) {
+            showError("Aun no hay datos del dashboard para interpretar.");
+            return;
+        }
+        const box = document.querySelector("#ai-insights");
+        const textEl = document.querySelector("#ai-insights-text");
+        const modelEl = document.querySelector("#ai-insights-model");
+        const noteEl = document.querySelector("#ai-insights-note");
+        button.disabled = true;
+        button.textContent = "Generando...";
+        try {
+            const response = await fetch("/api/interpretar", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(context),
+            });
+            const raw = await response.text();
+            let payload = {};
+            try {
+                payload = raw ? JSON.parse(raw) : {};
+            } catch {
+                throw new Error(
+                    response.status === 404
+                        ? "Endpoint /api/interpretar no encontrado. Reinicia el servidor Flask."
+                        : `La IA no devolvio JSON (HTTP ${response.status}). Reinicia Flask y recarga la pagina.`,
+                );
+            }
+            if (!response.ok) {
+                throw new Error(payload.error || "No se pudo interpretar con IA");
+            }
+            if (box) {
+                box.hidden = false;
+            }
+            if (textEl) {
+                textEl.textContent = payload.texto || "";
+            }
+            if (modelEl) {
+                const bits = [];
+                if (payload.modelo) {
+                    bits.push(`Modelo: ${payload.modelo}`);
+                }
+                if (payload.modulo) {
+                    bits.push(`Vista: ${payload.modulo}`);
+                }
+                modelEl.textContent = bits.join(" · ");
+            }
+            if (noteEl) {
+                noteEl.textContent = payload.aviso || "";
+            }
+        } catch (error) {
+            showError(error.message);
+        } finally {
+            button.disabled = false;
+            button.textContent = "Explicar con IA";
+        }
+    });
 }
 
 function updateCharts(data) {

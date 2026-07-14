@@ -23,6 +23,7 @@ service = DashboardService()
 def _request_filters() -> dict[str, str]:
     return {
         "anio": request.args.get("anio", "").strip(),
+        "anio_comp": request.args.get("anio_comp", "").strip(),
         "departamento": request.args.get("departamento", "").strip(),
         "producto": request.args.get("producto", "").strip(),
         "tipo_ifi": request.args.get("tipo_ifi", "").strip(),
@@ -103,6 +104,45 @@ def dashboard():
     return jsonify(
         service.get_dashboard(filters, page=page, page_size=page_size)
     )
+
+
+@app.post("/api/interpretar")
+def interpretar():
+    """Interpretacion asistida por OpenAI sobre datos ya calculados del DataMart."""
+    from web.services.insights_service import interpret_with_openai
+
+    payload = request.get_json(silent=True) or {}
+    modulo = str(payload.get("modulo") or "resumen").strip().lower()
+    kpis = payload.get("kpis") or {}
+    if not kpis:
+        return jsonify({"error": "Se requieren KPIs para interpretar."}), 400
+
+    # Solo reenviamos campos analiticos; nunca secretos ni prompts del cliente.
+    allowed = (
+        "filtros",
+        "kpis",
+        "yoy",
+        "insights_reglas",
+        "anual",
+        "mensual",
+        "trimestres",
+        "top_departamentos",
+        "concentracion",
+        "productos",
+        "departamentos",
+        "instituciones",
+        "tasas",
+    )
+    context = {key: payload[key] for key in allowed if key in payload}
+
+    try:
+        result = interpret_with_openai(context, modulo=modulo)
+        return jsonify(result)
+    except RuntimeError as error:
+        return jsonify({"error": str(error)}), 503
+    except Exception as error:
+        app.logger.exception("Error en interpretacion OpenAI", exc_info=error)
+        return jsonify({"error": "No se pudo generar la interpretacion con IA."}), 500
 
 
 @app.get("/api/export")

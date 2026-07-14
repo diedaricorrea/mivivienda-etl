@@ -1,0 +1,26 @@
+{# Panel reutilizable de lectura asistida por IA por modulo. #}
+<section
+    id="ai-panel"
+    class="panel insights-panel ai-panel-module"
+    aria-label="Lectura asistida por IA"
+>
+    <div class="panel-header">
+        <div>
+            <h2>{{ ai_title|default('Lectura asistida por IA') }}</h2>
+            <p class="panel-sub">
+                {{ ai_subtitle|default('Interpretacion contextual de esta vista a partir de indicadores del DataMart') }}
+            </p>
+        </div>
+        <button id="ai-interpret" class="chip-outline" type="button">
+            Explicar con IA
+        </button>
+    </div>
+    <div id="ai-insights" class="ai-insights" hidden>
+        <div class="ai-insights-header">
+            <strong>Lectura asistida por IA</strong>
+            <small id="ai-insights-model"></small>
+        </div>
+        <pre id="ai-insights-text" class="ai-insights-text"></pre>
+        <p id="ai-insights-note" class="panel-sub"></p>
+    </div>
+</section>

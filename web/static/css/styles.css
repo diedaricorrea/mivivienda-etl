@@ -846,7 +846,128 @@ body[data-module="mapa"] .map-container-lg {
     font-weight: 600;
 }
 
-.kpi-note {
+.kpi-yoy {
+    display: inline-flex;
+    margin-top: 8px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.kpi-yoy.positive {
+    color: #0f9f6e;
+    border-color: color-mix(in srgb, #0f9f6e 30%, var(--line));
+    background: color-mix(in srgb, #0f9f6e 12%, var(--surface));
+}
+
+.kpi-yoy.negative {
+    color: #d64545;
+    border-color: color-mix(in srgb, #d64545 30%, var(--line));
+    background: color-mix(in srgb, #d64545 12%, var(--surface));
+}
+
+.yoy-banner {
+    margin: 12px 0 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+
+.insights-panel {
+    margin-bottom: 16px;
+}
+
+.insights-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.insights-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.insights-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.insights-list li {
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface-2);
+}
+
+.insights-list strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.86rem;
+}
+
+.insights-list span {
+    color: var(--muted);
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+.insights-list li[data-tipo="alerta"] {
+    border-color: color-mix(in srgb, #d64545 35%, var(--line));
+}
+
+.ai-insights {
+    margin-top: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--bg-soft);
+}
+
+.ai-insights-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.ai-insights-header small {
+    color: var(--muted);
+}
+
+.ai-insights-text {
+    margin: 0;
+    white-space: pre-wrap;
+    font-family: inherit;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--ink);
+}
+
+.ai-panel-module {
+    margin-bottom: 16px;
+}
+
+@media (max-width: 900px) {
+    .insights-list {
+        grid-template-columns: 1fr;
+    }
+}
     display: block;
     margin-top: auto;
     padding-top: 4px;

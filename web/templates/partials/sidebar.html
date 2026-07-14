@@ -92,6 +92,13 @@
         </label>
 
         <label>
+            Comparar con
+            <select id="anio_comp" title="Anio de referencia para deltas YoY">
+                <option value="">Anio previo (auto)</option>
+            </select>
+        </label>
+
+        <label>
             Geografia
             <select id="departamento">
                 <option value="">Todo el pais</option>
@@ -115,7 +122,10 @@
         <button id="apply-filters" class="primary-button" type="button">
             Aplicar filtros
         </button>
-        <p class="filter-help">Los filtros se mantienen al cambiar de vista.</p>
+        <p class="filter-help">
+            Periodo filtra el analisis. “Comparar con” define el anio de referencia
+            para los deltas YoY (por defecto, el anio previo).
+        </p>
     </section>
     {% endif %}
 

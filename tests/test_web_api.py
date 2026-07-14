@@ -24,10 +24,13 @@ class WebApiTests(unittest.TestCase):
     def test_dashboard_routes_render(self):
         for path, needle in [
             ("/tendencias", b"Evolucion anual"),
+            ("/tendencias", b"Lectura IA"),
             ("/mapa", b"Mapa interactivo"),
             ("/mapa", b"Relieve"),
+            ("/mapa", b"Lectura IA"),
             ("/analisis", b"Monto y ticket por producto"),
             ("/analisis", b"FCTP"),
+            ("/analisis", b"Lectura IA"),
             ("/detalle", b"Detalle analitico"),
         ]:
             response = self.client.get(path)
@@ -51,6 +54,30 @@ class WebApiTests(unittest.TestCase):
         self.assertIn(b"Proceso ETL", response.data)
         self.assertIn(b"vw_creditos_analitica", response.data)
         self.assertIn(b"Indicadores del dashboard", response.data)
+        self.assertIn(b"Innovaciones analiticas e asistencia de IA", response.data)
+        self.assertIn(b"gpt-4.1-mini", response.data)
+
+    def test_yoy_supports_custom_year_pair(self):
+        response = self.client.get("/api/dashboard?anio=2024&anio_comp=2018")
+        payload = response.get_json()
+
+        self.assertEqual(response.status_code, 200)
+        yoy = payload["yoy"]
+        self.assertTrue(yoy["available"])
+        self.assertEqual(yoy["anio_actual"], 2024)
+        self.assertEqual(yoy["anio_previo"], 2018)
+        self.assertEqual(yoy["modo"], "manual")
+        self.assertEqual(yoy["etiqueta"], "2018 vs 2024")
+        self.assertIn("monto_total_pct", yoy["deltas"])
+        self.assertTrue(payload["insights"])
+
+    def test_interpretar_requires_kpis(self):
+        response = self.client.post(
+            "/api/interpretar",
+            json={"modulo": "resumen"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("KPIs", response.get_json()["error"])
 
     def test_health_connects_to_database(self):
         response = self.client.get("/api/health")

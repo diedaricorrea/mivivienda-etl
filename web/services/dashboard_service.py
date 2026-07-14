@@ -450,7 +450,170 @@ class DashboardService:
                 },
                 "meta": self.get_meta(),
             }
+
+        from web.services.insights_service import build_rule_insights
+
+        yoy = self._build_yoy(filters)
+        response["yoy"] = yoy
+        response["insights"] = build_rule_insights(
+            response["kpis"],
+            response["productos"],
+            response["concentracion"],
+            yoy=yoy,
+            filtros=response["filtros_aplicados"],
+        )
         return response
+
+    def _snapshot_kpis(self, filters: dict[str, str]) -> dict:
+        where_sql, params = self._build_where(filters)
+        queries = {
+            "kpis": f"""
+                SELECT
+                    COALESCE(SUM(cantidad_creditos), 0) AS cantidad,
+                    COALESCE(SUM(monto_total), 0) AS monto_total,
+                    COALESCE(
+                        SUM(monto_total) / NULLIF(SUM(cantidad_creditos), 0),
+                        0
+                    ) AS monto_promedio,
+                    COALESCE(
+                        SUM(suma_tasa) / NULLIF(SUM(cantidad_creditos), 0),
+                        0
+                    ) AS tasa_promedio
+                FROM {AGG_TABLE}
+                {where_sql}
+            """,
+            "productos": f"""
+                SELECT
+                    codigo_producto AS nombre,
+                    ROUND(SUM(monto_total), 2) AS monto_total
+                FROM {AGG_TABLE}
+                {where_sql}
+                GROUP BY codigo_producto
+            """,
+            "concentracion": f"""
+                SELECT
+                    CASE
+                        WHEN departamento = 'LIMA' THEN 'LIMA'
+                        ELSE 'RESTO DEL PAIS'
+                    END AS nombre,
+                    ROUND(SUM(monto_total), 2) AS monto_total
+                FROM {AGG_TABLE}
+                {where_sql}
+                GROUP BY
+                    CASE
+                        WHEN departamento = 'LIMA' THEN 'LIMA'
+                        ELSE 'RESTO DEL PAIS'
+                    END
+            """,
+            "mensual": f"""
+                SELECT
+                    anio,
+                    mes_numero,
+                    mes_nombre,
+                    CONCAT(anio, '-', LPAD(mes_numero, 2, '0')) AS periodo,
+                    ROUND(SUM(monto_total), 2) AS monto_total
+                FROM {AGG_TABLE}
+                {where_sql}
+                GROUP BY anio, mes_numero, mes_nombre
+                ORDER BY anio, mes_numero
+            """,
+        }
+        with self.engine.connect() as connection:
+            kpis = self._serialize_row(
+                connection.execute(text(queries["kpis"]), params).mappings().one()
+            )
+            productos = self._fetch_rows(connection, queries["productos"], params)
+            concentracion = self._fetch_rows(
+                connection, queries["concentracion"], params
+            )
+            mensual = self._fetch_rows(connection, queries["mensual"], params)
+        return self._enrich_kpis(kpis, mensual, productos, concentracion)
+
+    def _build_yoy(self, filters: dict[str, str]) -> dict:
+        from web.services.insights_service import build_yoy_payload
+
+        meta = self.get_meta()
+        anio_min = int(meta.get("anio_min") or 0)
+        anio_max = int(meta.get("anio_max") or 0)
+        if not anio_min or not anio_max or anio_max <= anio_min:
+            return {
+                "available": False,
+                "motivo": "Se requieren al menos dos anios en el DataMart.",
+            }
+
+        if filters.get("anio"):
+            try:
+                anio_actual = int(filters["anio"])
+            except ValueError:
+                return {"available": False, "motivo": "Anio de filtro invalido."}
+        else:
+            anio_actual = anio_max
+
+        if filters.get("anio_comp"):
+            try:
+                anio_previo = int(filters["anio_comp"])
+            except ValueError:
+                return {"available": False, "motivo": "Anio de comparacion invalido."}
+            modo = "manual"
+        else:
+            anio_previo = anio_actual - 1
+            modo = "auto"
+
+        if anio_previo == anio_actual:
+            return {
+                "available": False,
+                "motivo": "El anio de comparacion debe ser distinto al periodo analizado.",
+                "anio_actual": anio_actual,
+                "anio_previo": anio_previo,
+            }
+
+        if anio_previo < anio_min or anio_previo > anio_max:
+            return {
+                "available": False,
+                "motivo": (
+                    f"El anio de comparacion {anio_previo} esta fuera del "
+                    f"rango disponible ({anio_min}-{anio_max})."
+                ),
+                "anio_actual": anio_actual,
+            }
+
+        if anio_actual < anio_min or anio_actual > anio_max:
+            return {
+                "available": False,
+                "motivo": f"El periodo {anio_actual} esta fuera del rango disponible.",
+            }
+
+        base = {
+            key: value
+            for key, value in filters.items()
+            if key not in {"anio", "anio_comp"} and value
+        }
+        current = self._snapshot_kpis({**base, "anio": str(anio_actual)})
+        previous = self._snapshot_kpis({**base, "anio": str(anio_previo)})
+        return {
+            "available": True,
+            "modo": modo,
+            "anio_actual": anio_actual,
+            "anio_previo": anio_previo,
+            "actual": {
+                "cantidad": current.get("cantidad"),
+                "monto_total": current.get("monto_total"),
+                "monto_promedio": current.get("monto_promedio"),
+                "tasa_promedio": current.get("tasa_promedio"),
+                "participacion_nmiv_pct": current.get("participacion_nmiv_pct"),
+                "concentracion_lima_pct": current.get("concentracion_lima_pct"),
+            },
+            "previo": {
+                "cantidad": previous.get("cantidad"),
+                "monto_total": previous.get("monto_total"),
+                "monto_promedio": previous.get("monto_promedio"),
+                "tasa_promedio": previous.get("tasa_promedio"),
+                "participacion_nmiv_pct": previous.get("participacion_nmiv_pct"),
+                "concentracion_lima_pct": previous.get("concentracion_lima_pct"),
+            },
+            "deltas": build_yoy_payload(current, previous),
+            "etiqueta": f"{anio_previo} vs {anio_actual}",
+        }
 
     @staticmethod
     def _enrich_kpis(
