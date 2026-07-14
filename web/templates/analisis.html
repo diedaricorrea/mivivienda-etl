@@ -1,0 +1,74 @@
+{% extends "layouts/dashboard.html" %}
+{% from "partials/macros.html" import product_codes_help %}
+
+{% block title %}Analisis · BI Mivivienda{% endblock %}
+
+{% block topbar_eyebrow %}
+<p class="panel-sub" style="margin:0 0 6px">Vista comparativa</p>
+{% endblock %}
+
+{% block page_heading %}Analisis{% endblock %}
+
+{% block content %}
+<div class="vista-explain">
+    <strong>Para que sirve</strong>
+    <p>
+        Compara productos, departamentos, instituciones y tasas.
+        Es la capa para responder “quien concentra el monto” y
+        “como se comportan precio y ticket por segmento”.
+    </p>
+</div>
+
+<section id="analisis" class="dashboard-row row-analysis">
+    <article class="panel">
+        <div class="panel-header">
+            <div class="panel-title-row">
+                <h2>Monto y ticket por producto</h2>
+                {{ product_codes_help('start') }}
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="product-chart"></canvas>
+        </div>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Top departamentos</h2>
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="department-chart"></canvas>
+        </div>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Top IFI por monto</h2>
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="ifi-chart"></canvas>
+        </div>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div class="panel-title-row">
+                <h2>Tasa promedio por producto y tipo de IFI</h2>
+                {{ product_codes_help('end') }}
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="rate-chart"></canvas>
+        </div>
+    </article>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

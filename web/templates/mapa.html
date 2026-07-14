@@ -1,0 +1,47 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block title %}Mapa · BI Mivivienda{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+
+{% block topbar_eyebrow %}
+<p class="panel-sub" style="margin:0 0 6px">Vista geografica</p>
+{% endblock %}
+
+{% block page_heading %}Mapa{% endblock %}
+
+{% block content %}
+<div class="vista-explain vista-explain-compact">
+    <strong>Para que sirve</strong>
+    <p>
+        La coropleta compara el monto colocado por departamento.
+        Ayuda a ver concentracion territorial y priorizar regiones
+        en la toma de decisiones.
+    </p>
+</div>
+
+<article id="mapa-panel" class="panel panel-map panel-map-page">
+    <div class="panel-header">
+        <div>
+            <h2>Colocaciones por departamento</h2>
+            <p class="panel-sub">Mapa interactivo</p>
+        </div>
+        <div class="map-toolbar">
+            <div class="map-basemap-toggle" role="group" aria-label="Tipo de mapa base">
+                <button type="button" class="map-basemap-btn" data-basemap="plano">Plano</button>
+                <button type="button" class="map-basemap-btn" data-basemap="relieve">Relieve</button>
+            </div>
+            <span class="panel-hint">Coropleta por monto</span>
+        </div>
+    </div>
+    <div id="peru-map" class="map-container map-container-lg" aria-label="Mapa de Peru"></div>
+    <div id="map-legend" class="map-legend"></div>
+</article>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

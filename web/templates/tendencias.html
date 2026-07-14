@@ -1,0 +1,101 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block title %}Tendencias · BI Mivivienda{% endblock %}
+
+{% block topbar_eyebrow %}
+<p class="panel-sub" style="margin:0 0 6px">Vista analitica</p>
+{% endblock %}
+
+{% block page_heading %}Tendencias{% endblock %}
+
+{% block content %}
+<div class="vista-explain">
+    <strong>Para que sirve</strong>
+    <p>
+        Muestra la evolucion temporal del monto y la cantidad de creditos.
+        Sirve para detectar crecimiento, caidas y estacionalidad antes de
+        decidir donde profundizar.
+    </p>
+</div>
+
+<section id="tendencias" class="dashboard-row row-trend">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Evolucion anual</h2>
+                <p class="panel-sub">Monto y cantidad por anio</p>
+            </div>
+        </div>
+        <div class="chart-container chart-mid">
+            <canvas id="annual-chart"></canvas>
+        </div>
+    </article>
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Tendencia mensual</h2>
+                <p class="panel-sub">Serie anio-mes (sin mezclar eneros)</p>
+            </div>
+        </div>
+        <div class="chart-container chart-mid">
+            <canvas id="monthly-chart"></canvas>
+        </div>
+    </article>
+</section>
+
+<section class="dashboard-row row-mid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Monto por trimestre</h2>
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="quarter-chart"></canvas>
+        </div>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Lima vs resto del pais</h2>
+            </div>
+        </div>
+        <div class="chart-container chart-doughnut">
+            <canvas id="concentration-chart"></canvas>
+        </div>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Distribucion por plazo</h2>
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="term-chart"></canvas>
+        </div>
+        <div class="panel-footer-stats">
+            <div>
+                <span class="stat-dot mint"></span>
+                <div>
+                    <small>Producto NMIV/NCMV</small>
+                    <strong id="kpi-nmiv-footer">--</strong>
+                </div>
+            </div>
+            <div>
+                <span class="stat-dot amber"></span>
+                <div>
+                    <small>Lima</small>
+                    <strong id="kpi-lima-footer">--</strong>
+                </div>
+            </div>
+        </div>
+    </article>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

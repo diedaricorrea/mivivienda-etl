@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BI Mivivienda{% endblock %}</title>
+    <script>
+        (function () {
+            const saved = localStorage.getItem("mivivienda-theme");
+            const theme = saved === "light" || saved === "dark"
+                ? saved
+                : "light";
+            document.documentElement.setAttribute("data-theme", theme);
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    {% block head_extra %}{% endblock %}
+</head>
+<body data-module="{{ module }}">
+    <div class="app-shell">
+        {% set active_page = 'dashboard' %}
+        {% set module = module|default('resumen') %}
+        {% include 'partials/sidebar.html' %}
+
+        <main class="content">
+            <header class="topbar">
+                <div>
+                    {% block topbar_eyebrow %}{% endblock %}
+                    <h1>{% block page_heading %}Dashboard{% endblock %}</h1>
+                </div>
+                <div class="topbar-actions">
+                    <button
+                        id="theme-toggle"
+                        class="icon-chip"
+                        type="button"
+                        aria-label="Cambiar tema"
+                    >
+                        <span class="theme-toggle-icon" aria-hidden="true"></span>
+                        <span id="theme-toggle-label">Modo oscuro</span>
+                    </button>
+                    <div class="header-badge">
+                        <span>Periodo</span>
+                        <strong id="period-badge">Cargando...</strong>
+                    </div>
+                </div>
+            </header>
+
+            {% block content %}{% endblock %}
+
+            <div id="loading" class="loading-overlay" aria-live="polite">
+                <div class="loader"></div>
+                <span>Consultando DataMart...</span>
+            </div>
+
+            <div id="error-toast" class="toast" role="alert"></div>
+        </main>
+    </div>
+
+    {% block scripts %}
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    {% endblock %}
+</body>
+</html>

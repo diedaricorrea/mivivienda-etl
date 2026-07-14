@@ -2,11 +2,16 @@ const charts = {};
 let peruMap = null;
 let peruLayer = null;
 let mapTiles = null;
+let selectedDepartmentLayer = null;
 let latestDashboard = null;
 let latestMapRows = [];
 let detailPage = 1;
 const DETAIL_PAGE_SIZE = 50;
 const FILTER_IDS = ["anio", "departamento", "producto", "tipo_ifi"];
+const FILTER_STORAGE_KEY = "mivivienda-bi-filters";
+const MAP_BASE_STORAGE_KEY = "mivivienda-map-base";
+const MODULE = document.body?.dataset?.module || "resumen";
+let mapBaseMode = localStorage.getItem(MAP_BASE_STORAGE_KEY) || "plano";
 
 const currency = new Intl.NumberFormat("es-PE", {
     style: "currency",
@@ -24,9 +29,11 @@ const percent = new Intl.NumberFormat("es-PE", {
 document.addEventListener("DOMContentLoaded", async () => {
     initTheme();
     bindEvents();
-    initSidebarNav();
+    bindCodeHelp();
+    restoreFilters();
     await checkHealth();
     await loadFilters();
+    restoreFilters();
     await loadDashboard();
 });
 
@@ -105,6 +112,7 @@ function bindEvents() {
         .querySelector("#apply-filters")
         ?.addEventListener("click", () => {
             detailPage = 1;
+            persistFilters();
             loadDashboard();
         });
 
@@ -116,12 +124,14 @@ function bindEvents() {
             }
         });
         detailPage = 1;
+        persistFilters();
         loadDashboard();
     });
 
     FILTER_IDS.forEach((id) => {
         document.querySelector(`#${id}`)?.addEventListener("change", () => {
             detailPage = 1;
+            persistFilters();
             loadDashboard();
         });
     });
@@ -142,51 +152,73 @@ function bindEvents() {
     });
 
     bindExportMenu();
+    bindMapBasemapToggle();
 }
 
-function initSidebarNav() {
-    const links = [...document.querySelectorAll(".nav-item[data-section]")];
-    if (!links.length) {
-        return;
-    }
+function bindCodeHelp() {
+    document.querySelectorAll(".code-help").forEach((help) => {
+        const trigger = help.querySelector(".code-help-trigger");
+        const panel = help.querySelector(".code-help-panel");
+        if (!trigger || !panel) {
+            return;
+        }
 
-    const sections = links
-        .map((link) => document.querySelector(`#${link.dataset.section}`))
-        .filter(Boolean);
-
-    links.forEach((link) => {
-        link.addEventListener("click", (event) => {
-            const target = document.querySelector(link.getAttribute("href"));
-            if (!target) {
-                return;
-            }
+        trigger.addEventListener("click", (event) => {
             event.preventDefault();
-            target.scrollIntoView({ behavior: "smooth", block: "start" });
-            links.forEach((item) => item.classList.remove("active"));
-            link.classList.add("active");
+            event.stopPropagation();
+            const willOpen = panel.hasAttribute("hidden");
+            closeAllCodeHelp();
+            if (willOpen) {
+                panel.removeAttribute("hidden");
+                trigger.setAttribute("aria-expanded", "true");
+            }
         });
+
+        panel.addEventListener("click", (event) => event.stopPropagation());
     });
 
-    const observer = new IntersectionObserver(
-        (entries) => {
-            const visible = entries
-                .filter((entry) => entry.isIntersecting)
-                .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-            if (!visible) {
-                return;
-            }
-            const id = visible.target.id;
-            links.forEach((link) => {
-                link.classList.toggle("active", link.dataset.section === id);
-            });
-        },
-        {
-            rootMargin: "-20% 0px -55% 0px",
-            threshold: [0.15, 0.35, 0.6],
-        },
-    );
+    document.addEventListener("click", () => closeAllCodeHelp());
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            closeAllCodeHelp();
+        }
+    });
+}
 
-    sections.forEach((section) => observer.observe(section));
+function closeAllCodeHelp() {
+    document.querySelectorAll(".code-help").forEach((help) => {
+        help.querySelector(".code-help-panel")?.setAttribute("hidden", "");
+        help.querySelector(".code-help-trigger")?.setAttribute("aria-expanded", "false");
+    });
+}
+
+function persistFilters() {
+    const values = {};
+    FILTER_IDS.forEach((id) => {
+        const value = document.querySelector(`#${id}`)?.value || "";
+        if (value) {
+            values[id] = value;
+        }
+    });
+    localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(values));
+}
+
+function restoreFilters() {
+    try {
+        const raw = localStorage.getItem(FILTER_STORAGE_KEY);
+        if (!raw) {
+            return;
+        }
+        const values = JSON.parse(raw);
+        FILTER_IDS.forEach((id) => {
+            const el = document.querySelector(`#${id}`);
+            if (el && values[id]) {
+                el.value = values[id];
+            }
+        });
+    } catch (_error) {
+        localStorage.removeItem(FILTER_STORAGE_KEY);
+    }
 }
 
 function bindExportMenu() {
@@ -360,46 +392,52 @@ async function loadDashboard(options = {}) {
 }
 
 function updateKpis(kpis) {
-    document.querySelector("#kpi-cantidad").textContent =
-        integer.format(kpis.cantidad);
-    document.querySelector("#kpi-total").textContent =
-        currency.format(kpis.monto_total);
-    document.querySelector("#kpi-promedio").textContent =
-        currency.format(kpis.monto_promedio);
-    document.querySelector("#kpi-tasa").textContent =
-        `${Number(kpis.tasa_promedio).toFixed(2)}%`;
+    if (!kpis) {
+        return;
+    }
+    setText("kpi-cantidad", integer.format(kpis.cantidad));
+    setText("kpi-total", currency.format(kpis.monto_total));
+    setText("kpi-promedio", currency.format(kpis.monto_promedio));
+    setText("kpi-tasa", `${Number(kpis.tasa_promedio).toFixed(2)}%`);
 
     const growthEl = document.querySelector("#kpi-crecimiento");
     const growthNote = document.querySelector("#kpi-crecimiento-note");
-    growthEl.classList.remove("positive", "negative");
+    if (growthEl && growthNote) {
+        growthEl.classList.remove("positive", "negative");
 
-    if (kpis.crecimiento_mensual_pct === null || kpis.crecimiento_mensual_pct === undefined) {
-        growthEl.textContent = "N/D";
-        growthNote.textContent = "Sin periodo comparable";
-    } else {
-        growthEl.textContent = `${percent.format(kpis.crecimiento_mensual_pct)}%`;
-        growthEl.classList.add(
-            kpis.crecimiento_mensual_pct >= 0 ? "positive" : "negative",
-        );
-        growthNote.textContent =
-            `${kpis.mes_actual || "Actual"} vs ${kpis.mes_anterior || "anterior"}`;
+        if (kpis.crecimiento_mensual_pct === null || kpis.crecimiento_mensual_pct === undefined) {
+            growthEl.textContent = "N/D";
+            growthNote.textContent = "Sin periodo comparable";
+        } else {
+            growthEl.textContent = `${percent.format(kpis.crecimiento_mensual_pct)}%`;
+            growthEl.classList.add(
+                kpis.crecimiento_mensual_pct >= 0 ? "positive" : "negative",
+            );
+            growthNote.textContent =
+                `${kpis.mes_actual || "Actual"} vs ${kpis.mes_anterior || "anterior"}`;
+        }
     }
 
-    document.querySelector("#kpi-mejor-mes").textContent =
-        kpis.mejor_mes || "N/D";
-    document.querySelector("#kpi-mejor-mes-note").textContent = kpis.mejor_mes_monto
-        ? currency.format(kpis.mejor_mes_monto)
-        : "Mayor colocacion";
+    setText("kpi-mejor-mes", kpis.mejor_mes || "N/D");
+    setText(
+        "kpi-mejor-mes-note",
+        kpis.mejor_mes_monto
+            ? currency.format(kpis.mejor_mes_monto)
+            : "Mayor colocacion",
+    );
 
     const nmiv = `${Number(kpis.participacion_nmiv_pct || 0).toFixed(1)}%`;
     const lima = `${Number(kpis.concentracion_lima_pct || 0).toFixed(1)}%`;
-    document.querySelector("#kpi-nmiv").textContent = nmiv;
-    document.querySelector("#kpi-lima").textContent = lima;
+    setText("kpi-nmiv", nmiv);
+    setText("kpi-lima", lima);
     setText("kpi-nmiv-footer", nmiv);
     setText("kpi-lima-footer", lima);
 }
 
 function updateCharts(data) {
+    if (typeof Chart === "undefined") {
+        return;
+    }
     const colors = themeColors();
     renderAnnualChart(data.anual || [], colors);
     renderMonthlyChart(data.mensual, colors);
@@ -856,37 +894,106 @@ function renderRateChart(rows, colors) {
     });
 }
 
+function bindMapBasemapToggle() {
+    const buttons = [...document.querySelectorAll("[data-basemap]")];
+    if (!buttons.length) {
+        return;
+    }
+
+    const syncActive = () => {
+        buttons.forEach((button) => {
+            button.classList.toggle("active", button.dataset.basemap === mapBaseMode);
+        });
+    };
+    syncActive();
+
+    buttons.forEach((button) => {
+        button.addEventListener("click", async () => {
+            const next = button.dataset.basemap;
+            if (!next || next === mapBaseMode) {
+                return;
+            }
+            mapBaseMode = next;
+            localStorage.setItem(MAP_BASE_STORAGE_KEY, mapBaseMode);
+            syncActive();
+            applyMapBasemap();
+            if (latestMapRows.length) {
+                await updateMap(latestMapRows);
+            } else if (peruMap) {
+                peruMap.invalidateSize();
+            }
+        });
+    });
+}
+
+function getBasemapConfig() {
+    if (mapBaseMode === "relieve") {
+        return {
+            url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+            attribution:
+                '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>, &copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
+            maxZoom: 17,
+        };
+    }
+    const dark = currentTheme() === "dark";
+    return {
+        url: dark
+            ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        attribution: "&copy; OpenStreetMap &copy; CARTO",
+        maxZoom: 12,
+    };
+}
+
+function applyMapBasemap() {
+    if (!peruMap || typeof L === "undefined") {
+        return;
+    }
+    const config = getBasemapConfig();
+    if (mapTiles) {
+        peruMap.removeLayer(mapTiles);
+    }
+    mapTiles = L.tileLayer(config.url, {
+        attribution: config.attribution,
+        maxZoom: config.maxZoom,
+    }).addTo(peruMap);
+    if (peruLayer) {
+        peruLayer.bringToFront();
+    }
+}
+
+function choroplethFillOpacity(amount) {
+    if (!amount) {
+        return mapBaseMode === "relieve" ? 0.12 : 0.22;
+    }
+    return mapBaseMode === "relieve" ? 0.58 : 0.86;
+}
+
 async function updateMap(rows, forceTiles = false) {
+    if (!document.querySelector("#peru-map") || typeof L === "undefined") {
+        return;
+    }
     const colors = themeColors();
     const values = Object.fromEntries(
         rows.map((item) => [normalizeName(item.nombre), item]),
     );
     const amounts = rows.map((item) => item.monto_total || 0);
     const maxAmount = Math.max(...amounts, 1);
-    const tileUrl = currentTheme() === "dark"
-        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
 
     if (!peruMap) {
         peruMap = L.map("peru-map", {
             zoomControl: true,
-            scrollWheelZoom: false,
+            scrollWheelZoom: MODULE === "mapa",
         }).setView([-9.2, -75.0], 5);
-        mapTiles = L.tileLayer(tileUrl, {
-            attribution: "&copy; OpenStreetMap &copy; CARTO",
-            maxZoom: 12,
-        }).addTo(peruMap);
-    } else if (forceTiles && mapTiles) {
-        peruMap.removeLayer(mapTiles);
-        mapTiles = L.tileLayer(tileUrl, {
-            attribution: "&copy; OpenStreetMap &copy; CARTO",
-            maxZoom: 12,
-        }).addTo(peruMap);
+        applyMapBasemap();
+    } else if (forceTiles) {
+        applyMapBasemap();
     }
 
     if (peruLayer) {
         peruMap.removeLayer(peruLayer);
     }
+    selectedDepartmentLayer = null;
 
     const response = await fetch("/static/geo/peru_departamentos.geojson");
     if (!response.ok) {
@@ -895,17 +1002,7 @@ async function updateMap(rows, forceTiles = false) {
     const geojson = await response.json();
 
     peruLayer = L.geoJSON(geojson, {
-        style: (feature) => {
-            const key = normalizeName(feature.properties.NOMBDEP);
-            const amount = values[key]?.monto_total || 0;
-            return {
-                fillColor: colorScale(amount, maxAmount, colors),
-                weight: 1,
-                opacity: 1,
-                color: colors.surface,
-                fillOpacity: amount > 0 ? 0.86 : 0.22,
-            };
-        },
+        style: (feature) => styleDepartment(feature, values, maxAmount, colors),
         onEachFeature: (feature, layer) => {
             const key = normalizeName(feature.properties.NOMBDEP);
             const row = values[key];
@@ -923,12 +1020,66 @@ async function updateMap(rows, forceTiles = false) {
                     { sticky: true, className: "map-tooltip" },
                 );
             }
+
+            layer.on({
+                mouseover: (event) => highlightDepartment(event.target, true),
+                mouseout: (event) => {
+                    peruLayer.resetStyle(event.target);
+                    if (selectedDepartmentLayer === event.target) {
+                        highlightDepartment(event.target, false, true);
+                    }
+                },
+                click: (event) => {
+                    if (selectedDepartmentLayer && selectedDepartmentLayer !== event.target) {
+                        peruLayer.resetStyle(selectedDepartmentLayer);
+                    }
+                    selectedDepartmentLayer = event.target;
+                    highlightDepartment(event.target, false, true);
+                    L.DomEvent.stopPropagation(event);
+                },
+                add: (event) => {
+                    const el = event.target.getElement?.();
+                    if (el) {
+                        el.removeAttribute("tabindex");
+                        el.style.outline = "none";
+                    }
+                },
+            });
         },
     }).addTo(peruMap);
 
     peruMap.invalidateSize();
     window.setTimeout(() => peruMap && peruMap.invalidateSize(), 120);
+    if (MODULE === "mapa") {
+        window.setTimeout(() => peruMap && peruMap.invalidateSize(), 320);
+    }
     renderMapLegend(maxAmount, colors);
+}
+
+function styleDepartment(feature, values, maxAmount, colors) {
+    const key = normalizeName(feature.properties.NOMBDEP);
+    const amount = values[key]?.monto_total || 0;
+    return {
+        fillColor: colorScale(amount, maxAmount, colors),
+        weight: 1.2,
+        opacity: 1,
+        color: colors.surface,
+        fillOpacity: choroplethFillOpacity(amount),
+    };
+}
+
+function highlightDepartment(layer, hovering = false, selected = false) {
+    if (!layer) {
+        return;
+    }
+    const primary = cssVar("--primary") || "#5d5fef";
+    layer.setStyle({
+        weight: selected || hovering ? 2.8 : 1.2,
+        color: selected || hovering ? primary : (cssVar("--surface") || "#ffffff"),
+    });
+    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+        layer.bringToFront();
+    }
 }
 
 window.addEventListener("resize", () => {

@@ -14,19 +14,39 @@ class WebApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Mivivienda", response.data)
         self.assertIn(b"Colocaciones del periodo", response.data)
+        self.assertIn(b"Evolucion anual", response.data)
+        self.assertIn(b"Monto y ticket por producto", response.data)
+        self.assertIn(b"Detalle analitico", response.data)
+        self.assertIn(b"Tendencias", response.data)
+        self.assertIn(b"Diccionario", response.data)
+        self.assertIn(b"Proyecto", response.data)
+
+    def test_dashboard_routes_render(self):
+        for path, needle in [
+            ("/tendencias", b"Evolucion anual"),
+            ("/mapa", b"Mapa interactivo"),
+            ("/mapa", b"Relieve"),
+            ("/analisis", b"Monto y ticket por producto"),
+            ("/analisis", b"FCTP"),
+            ("/detalle", b"Detalle analitico"),
+        ]:
+            response = self.client.get(path)
+            self.assertEqual(response.status_code, 200, path)
+            self.assertIn(needle, response.data, path)
 
     def test_proyecto_page_renders(self):
         response = self.client.get("/proyecto")
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b"Exposicion final", response.data)
+        self.assertIn(b"Proyecto academico", response.data)
+        self.assertIn(b"Oscar Eduardo Balcazar Chumacero", response.data)
         self.assertIn(b"fact_credito", response.data)
         self.assertIn(b"Modelo estrella del DataMart", response.data)
-        self.assertIn(b"por que se eligieron", response.data)
+        self.assertIn(b"Stack tecnologico", response.data)
+        self.assertIn(b"Conocimientos aplicados", response.data)
         self.assertIn(b"vw_creditos_analitica", response.data)
         self.assertIn(b"Componentes del DataMart", response.data)
-        self.assertIn(b"16 metricas visuales", response.data)
-        self.assertIn(b"Que consume el dashboard", response.data)
+        self.assertIn(b"Indicadores del dashboard", response.data)
 
     def test_health_connects_to_database(self):
         response = self.client.get("/api/health")

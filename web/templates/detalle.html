@@ -1,0 +1,60 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block title %}Detalle · BI Mivivienda{% endblock %}
+
+{% block topbar_eyebrow %}
+<p class="panel-sub" style="margin:0 0 6px">Vista transaccional</p>
+{% endblock %}
+
+{% block page_heading %}Detalle{% endblock %}
+
+{% block content %}
+<div class="vista-explain">
+    <strong>Para que sirve</strong>
+    <p>
+        Baja del indicador al registro. Permite auditar operaciones
+        concretas del universo filtrado y exportar evidencia.
+    </p>
+</div>
+
+<section id="detalle" class="panel detail-panel">
+    <div class="panel-header">
+        <div>
+            <h2>Detalle analitico</h2>
+            <p id="detalle-subtitle" class="panel-sub">50 registros por pagina</p>
+        </div>
+        <div class="pagination" aria-label="Paginacion del detalle">
+            <button id="detalle-prev" class="page-button" type="button" disabled>
+                Anterior
+            </button>
+            <span id="detalle-page-info" class="page-info">Pagina 1</span>
+            <button id="detalle-next" class="page-button" type="button" disabled>
+                Siguiente
+            </button>
+        </div>
+    </div>
+    <div class="table-wrapper table-wrapper-page">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Fecha</th>
+                    <th>Anio</th>
+                    <th>Producto</th>
+                    <th>Departamento</th>
+                    <th>Distrito</th>
+                    <th>IFI</th>
+                    <th>Plazo</th>
+                    <th>Monto</th>
+                    <th>Tasa</th>
+                </tr>
+            </thead>
+            <tbody id="detail-body"></tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

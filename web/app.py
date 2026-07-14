@@ -31,7 +31,27 @@ def _request_filters() -> dict[str, str]:
 
 @app.get("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", module="resumen")
+
+
+@app.get("/tendencias")
+def tendencias():
+    return render_template("tendencias.html", module="tendencias")
+
+
+@app.get("/mapa")
+def mapa():
+    return render_template("mapa.html", module="mapa")
+
+
+@app.get("/analisis")
+def analisis():
+    return render_template("analisis.html", module="analisis")
+
+
+@app.get("/detalle")
+def detalle():
+    return render_template("detalle.html", module="detalle")
 
 
 @app.get("/proyecto")

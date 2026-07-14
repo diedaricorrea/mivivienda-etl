@@ -1,0 +1,20 @@
+{% macro product_codes_help(align='start') -%}
+<div class="code-help{% if align == 'end' %} code-help-end{% endif %}">
+    <button
+        type="button"
+        class="code-help-trigger"
+        aria-expanded="false"
+        aria-label="Significado de codigos de producto"
+    >?</button>
+    <div class="code-help-panel" hidden>
+        <p class="code-help-title">Codigos de producto</p>
+        <dl>
+            <div><dt>FCTP</dt><dd>Financiamiento Complementario Techo Propio (hoy CTP)</dd></div>
+            <div><dt>MT</dt><dd>Mi Terreno</dd></div>
+            <div><dt>NCMV</dt><dd>Nuevo Credito Mivivienda (hoy CMV)</dd></div>
+            <div><dt>NMIV</dt><dd>Nuevo Credito Mivivienda (equivalente a NCMV)</dd></div>
+            <div><dt>SCRC</dt><dd>Servicio CRC (colocado desde nov. 2023)</dd></div>
+        </dl>
+    </div>
+</div>
+{%- endmacro %}

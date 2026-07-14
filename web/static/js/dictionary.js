@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", async () => {
-    initTheme();
     await loadDictionary();
     document
         .querySelector("#dictionary-search")
@@ -7,27 +6,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 let dictionaryRows = [];
-
-function initTheme() {
-    syncThemeLabel();
-    document.querySelector("#theme-toggle")?.addEventListener("click", () => {
-        const next = currentTheme() === "dark" ? "light" : "dark";
-        document.documentElement.setAttribute("data-theme", next);
-        localStorage.setItem("mivivienda-theme", next);
-        syncThemeLabel();
-    });
-}
-
-function currentTheme() {
-    return document.documentElement.getAttribute("data-theme") || "light";
-}
-
-function syncThemeLabel() {
-    const label = document.querySelector("#theme-toggle-label");
-    if (label) {
-        label.textContent = currentTheme() === "dark" ? "Modo claro" : "Modo oscuro";
-    }
-}
 
 async function loadDictionary() {
     try {
