@@ -1,161 +1,174 @@
-# Datamart Mivivienda 2024
+# Datamart Mivivienda
 
-Implementacion del Avance 2 de Inteligencia de Negocios usando:
+Proyecto academico del curso de **Inteligencia de Negocios**.
 
-- Python y pandas para Extract, Transform y Load.
-- MySQL 8 para staging, dimensiones, hechos, indices y restricciones.
-- Flask para el backend web y las APIs REST.
-- HTML, CSS, JavaScript, Chart.js y Leaflet para el dashboard web.
+Solucion integral para analizar las **colocaciones de credito del Fondo Mivivienda** a partir de datos publicos: modelado dimensional (estrella), proceso ETL, DataMart en MySQL y dashboard web analitico.
 
-## Arquitectura del proyecto
+| | |
+|---|---|
+| **Curso** | Inteligencia de Negocios |
+| **Docente** | Ing. Oscar Eduardo Balcazar Chumacero |
+| **Dominio** | Fondo Mivivienda (colocaciones multi-anio) |
+| **Entregable** | DataMart + ETL + dashboard BI |
+
+---
+
+## Stack tecnologico
+
+| Capa | Tecnologia | Uso |
+|---|---|---|
+| Lenguaje / datos | Python, pandas | Extraccion, transformacion y carga (ETL) |
+| Base de datos | MySQL 8 | Staging, dimensiones, hechos, vistas, agregados |
+| Backend | Flask, SQLAlchemy | Rutas HTML, APIs REST, consultas parametrizadas |
+| Frontend BI | HTML, CSS, JavaScript | Tablero, filtros, paginacion, exportacion |
+| Visualizacion | Chart.js, Leaflet | Graficos analiticos y mapa coropletico |
+| Calidad | unittest | Pruebas de transformacion y de la API web |
+
+---
+
+## Arquitectura
 
 ```text
-CSV de origen
+CSV (datos/)
     |
     v
-etl/extract.py -> etl/transform.py -> etl/load.py
+etl/extract.py → etl/transform.py → etl/load.py
     |                                      |
-    +------------ etl/main.py -------------+
+    +------------- etl/main.py ------------+
                                            |
                                            v
-                                  MySQL / DataMart
+                                  MySQL · DataMart
+                                   (estrella + vistas
+                                    + agg_colocaciones)
                                            |
                                            v
-                              DashboardService (SQL)
+                         web/services/dashboard_service.py
                                            |
                                            v
-                                Flask API / web/app.py
-                                  /                \
-                                 v                  v
-                         Respuestas JSON       index.html
-                                                   |
-                                                   v
-                                      dashboard.js + styles.css
+                                    web/app.py (Flask)
+                                      /           \
+                                     v             v
+                              HTML (Jinja)     /api/* (JSON)
+                                     |
+                                     v
+                         Chart.js · Leaflet · dashboard.js
 ```
 
-### Equivalencia con Spring Boot
+El ETL es un **proceso batch** independiente del servidor web. El dashboard solo consulta el DataMart ya cargado.
 
-Flask no obliga a utilizar una estructura determinada. En este proyecto se
-organizo de una forma similar a una aplicacion Spring Boot:
+Organizacion en capas (equivalente conceptual a un backend tipico):
 
-| Spring Boot | Proyecto Python | Responsabilidad |
-|---|---|---|
-| `Controller` | `web/app.py` | Define las rutas HTTP y devuelve HTML o JSON. |
-| `Service` | `web/services/dashboard_service.py` | Contiene la logica del dashboard y aplica filtros. |
-| `Repository` | `DashboardService` mediante SQLAlchemy | Ejecuta consultas parametrizadas contra MySQL. |
-| `Entity` | Tablas y vistas definidas en `sql/` | El esquema se define con SQL; no se utiliza ORM. |
-| `application.properties` | `.env` + `config/conexion.py` | Guarda host, puerto, base, usuario y clave. |
-| `templates` | `web/templates/` | Contiene el HTML servido por Flask. |
-| `static` | `web/static/` | Contiene CSS y JavaScript. |
-| `RestController` | Rutas `/api/*` de Flask | Devuelve informacion JSON al navegador. |
+| Rol | Ubicacion |
+|---|---|
+| Rutas / controladores | `web/app.py` |
+| Logica de consulta BI | `web/services/dashboard_service.py` |
+| Configuracion | `.env` + `config/conexion.py` |
+| Esquema fisico | `sql/` |
+| Presentacion | `web/templates/` + `web/static/` |
 
-No se crearon clases `Entity` porque el proyecto trabaja con un DataMart
-analitico ya modelado en SQL. La aplicacion no realiza operaciones CRUD sobre
-objetos individuales; principalmente ejecuta agregaciones, rankings y filtros
-sobre la vista `vw_creditos_analitica`.
+---
 
-El modulo `etl/` tampoco forma parte del backend web. Es un proceso batch
-independiente que prepara y carga los datos antes de iniciar el dashboard.
+## Modelo dimensional (estrella)
 
-La configuracion compartida (`.env`, ruta del CSV y motores SQLAlchemy) vive
-en `config/`, para que ETL, web y scripts no se acoplen entre si.
+Grano de `fact_credito`: **un credito desembolsado**.
 
-## Estructura de carpetas
+| Tipo | Tablas |
+|---|---|
+| Hechos | `fact_credito` |
+| Dimensiones | `dim_tiempo`, `dim_geografia`, `dim_producto`, `dim_ifi`, `dim_plazo` |
+| Staging / auditoria | `stg_colocaciones_mivivienda`, `etl_ejecucion` |
+| Lectura analitica | `vw_creditos_analitica`, `agg_colocaciones` |
+
+Como la fuente no trae un ID de transaccion, el ETL genera `record_hash` con los campos normalizados para deduplicar y soportar carga incremental.
+
+Detalle de rendimiento (agregados e indices): `docs/rendimiento.md`.
+
+---
+
+## Estructura del repositorio
 
 ```text
 mivivienda-etl/
-|-- config/                 .env, rutas y conexion MySQL compartida
-|-- datos/                  CSV de origen
-|-- etl/                    Extraccion, transformacion y carga
-|-- sql/                    Creacion, validacion e indices del DataMart
+|-- config/              Conexion MySQL y rutas compartidas
+|-- datos/               CSV de origen (2018-2024)
+|-- etl/                 Extract · Transform · Load
+|-- sql/                 Esquema, validaciones, KPIs, rendimiento
 |-- web/
-|   |-- app.py              Controlador Flask y APIs
-|   |-- services/           Logica y consultas del dashboard
-|   |-- templates/          HTML del dashboard web
-|   `-- static/
-|       |-- css/            Estilos
-|       |-- js/             fetch, filtros, graficos, mapa y tabla
-|       `-- geo/            GeoJSON de departamentos del Peru
-|-- tests/                  Pruebas ETL y API
-|-- scripts/                Utilidades academicas (docs, evidencias, PPT)
-|-- docs/                   Informe, guion y evidencias
-|-- .env.example            Ejemplo de configuracion
-`-- requirements.txt        Dependencias Python
+|   |-- app.py           Flask (paginas + API)
+|   |-- services/        Consultas del dashboard
+|   |-- templates/       HTML (Resumen, Tendencias, Mapa, Analisis, Detalle, Proyecto…)
+|   `-- static/          CSS, JS, GeoJSON, logos
+|-- tests/               Pruebas automatizadas
+|-- docs/                Documentacion tecnica y academica
+|-- scripts/             Utilidades de documentacion (opcionales)
+|-- .env.example
+`-- requirements.txt
 ```
 
-El dashboard consulta una tabla agregada `agg_colocaciones` (refrescada al final del ETL)
-para KPIs y graficos. El detalle analitico sigue leyendo `vw_creditos_analitica`
-con paginacion.
+### Rutas del dashboard
 
-## Modelo estrella
+| Ruta | Contenido |
+|---|---|
+| `/` | Resumen completo (KPIs, mapa, series, analisis, detalle) |
+| `/tendencias` | Vista temporal enfocada |
+| `/mapa` | Mapa interactivo (plano / relieve) |
+| `/analisis` | Comparativos por producto, IFI y geografia |
+| `/detalle` | Tabla analitica paginada |
+| `/diccionario` | Diccionario de datos de la fuente |
+| `/proyecto` | Ficha academica del proyecto |
 
-El grano de `fact_credito` es un credito desembolsado. El modelo contiene:
+API principal:
 
-- `dim_tiempo`
-- `dim_geografia`
-- `dim_producto`
-- `dim_ifi`
-- `dim_plazo`
-- `fact_credito`
+```text
+GET /api/health
+GET /api/filtros
+GET /api/dashboard
+GET /api/dashboard?anio=2024&departamento=LIMA&producto=NMIV
+GET /api/export?formato=xlsx
+GET /api/diccionario
+```
 
-Como el CSV no incluye un identificador de transaccion, el ETL crea
-`record_hash` con los 14 campos normalizados. Esta clave permite eliminar
-duplicados exactos y evitar que una carga incremental inserte dos veces la
-misma fila.
+---
 
-## Calidad detectada en el archivo entregado
+## Requisitos previos
 
-- Filas leidas: 13,507
-- Filas completamente vacias: 4,160
-- Filas no vacias: 9,347
-- Duplicados exactos sobrantes: 11
-- Filas esperadas tras limpieza y deduplicacion: 9,336
+- Python 3.10+ (recomendado 3.12)
+- MySQL 8 en ejecucion
+- Usuario MySQL con permiso para crear la base configurada en `.env`
 
-## Como iniciar el proyecto
+---
 
-Todos los comandos deben ejecutarse desde la carpeta raiz:
+## Como ejecutar el proyecto
+
+Todos los comandos se lanzan desde la **raiz del repositorio**.
+
+### 1. Entorno virtual e instalacion
+
+**Windows (PowerShell):**
 
 ```powershell
 cd ruta\al\proyecto\mivivienda-etl
-```
-
-### Primera ejecucion
-
-#### 1. Verificar MySQL
-
-MySQL debe estar instalado y su servicio debe encontrarse iniciado. Tambien se
-necesita un usuario con permiso para crear la base configurada.
-
-#### 2. Crear el entorno virtual
-
-```powershell
 python -m venv .venv
-```
-
-#### 3. Activar el entorno
-
-```powershell
 .\.venv\Scripts\Activate.ps1
-```
-
-Si PowerShell no permite activar scripts, los comandos tambien pueden
-ejecutarse directamente con `.\.venv\Scripts\python.exe`.
-
-#### 4. Instalar dependencias
-
-```powershell
 pip install -r requirements.txt
 ```
 
-#### 5. Configurar la conexion
+**Linux / macOS:**
 
-Crear `.env` a partir del ejemplo:
+```bash
+cd ruta/al/proyecto/mivivienda-etl
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 2. Configuracion
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Completar los valores:
+Editar `.env`:
 
 ```dotenv
 DB_HOST=localhost
@@ -166,208 +179,113 @@ DB_PASSWORD=tu_clave
 CSV_PATH=./datos/colocaciones_2024.csv
 ```
 
-No se debe publicar `.env` porque contiene la contraseña.
+No versionar `.env` (contiene credenciales).
 
-#### 6. Crear la base y el modelo estrella
+### 3. Crear base y modelo estrella
 
 ```powershell
-.\.venv\Scripts\python.exe -m etl.setup_database
+python -m etl.setup_database
 ```
 
-Este comando crea la base indicada por `DB_NAME` y ejecuta automáticamente:
+Ejecuta automaticamente `sql/01_staging.sql` y `sql/02_datamart.sql`.
+
+### 4. Cargar datos (ETL)
+
+Por defecto carga **todos** los CSV de `datos/` (historico multi-anio):
+
+```powershell
+python -m etl.main --mode initial
+```
+
+`initial` reinicia el Datamart y vuelve a cargar. Para agregar sin borrar:
+
+```powershell
+python -m etl.main --mode incremental
+```
+
+Un solo archivo:
+
+```powershell
+python -m etl.main --mode incremental --csv .\datos\Data_NCMV_2018.csv
+```
+
+Al finalizar, el ETL refresca agregados e indices de rendimiento.
+
+### 5. Pruebas
+
+```powershell
+python -m unittest discover -s tests -v
+```
+
+### 6. Dashboard
+
+```powershell
+python -m web.app
+```
+
+Abrir:
 
 ```text
-sql/01_staging.sql
-sql/02_datamart.sql
+http://127.0.0.1:5000
 ```
 
-#### 7. Ejecutar la carga (todos los anios)
+Flask sirve plantillas, estaticos y API en el mismo proceso. No se requiere Node.js ni otro servidor frontend.
 
-Por defecto el ETL carga **todos** los CSV de `datos/` (2018-2024).
-Con `initial` reinicia el Datamart y luego inserta cada archivo:
+### Ejecuciones siguientes
+
+Si la base ya esta creada y cargada:
 
 ```powershell
-.\.venv\Scripts\python.exe -m etl.main --mode initial
+python -m web.app
 ```
 
-Si solo quieres agregar archivos nuevos sin borrar lo existente:
+Datos nuevos:
 
 ```powershell
-.\.venv\Scripts\python.exe -m etl.main --mode incremental
+python -m etl.main --mode incremental
+python -m web.app
 ```
 
-Para un solo archivo:
+---
 
-```powershell
-.\.venv\Scripts\python.exe -m etl.main --mode incremental --csv .\datos\Data_NCMV_2018.csv
-```
+## Carpeta `sql/`
 
-#### 8. Ejecutar las pruebas
-
-```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
-```
-
-Las cinco pruebas deben finalizar con `OK`.
-
-#### 9. Iniciar el dashboard web
-
-```powershell
-.\.venv\Scripts\python.exe -m web.app
-```
-
-Abrir en el navegador:
-
-```text
-http://localhost:5000
-```
-
-El mismo proceso Flask sirve:
-
-- El backend Python.
-- Las APIs REST.
-- El HTML del dashboard.
-- Los archivos CSS, JavaScript y el mapa GeoJSON.
-
-No es necesario iniciar Angular, Node.js, Streamlit ni otro servidor.
-
-### Ejecuciones posteriores
-
-Cuando la base ya fue creada y cargada, solamente se necesita iniciar Flask:
-
-```powershell
-.\.venv\Scripts\python.exe -m web.app
-```
-
-Cuando se reciba un archivo con datos nuevos, ejecutar primero la carga
-incremental:
-
-```powershell
-.\.venv\Scripts\python.exe -m etl.main --mode incremental
-.\.venv\Scripts\python.exe -m web.app
-```
-
-La carga incremental no reinicia el DataMart y solo inserta hashes nuevos.
-
-Para reconstruir completamente el DataMart:
-
-```powershell
-.\.venv\Scripts\python.exe -m etl.main --mode initial
-```
-
-## Uso de la carpeta `sql`
-
-La carpeta `sql/` contiene la implementacion fisica y las consultas de
-validacion. Los archivos se encuentran separados por responsabilidad:
-
-| Archivo | Cuando se usa | Funcion |
-|---|---|---|
-| `00_crear_base.sql` | Opcional y manual | Ejemplo para crear la base desde MySQL Workbench. |
-| `01_staging.sql` | Primera configuracion | Crea la tabla temporal de aterrizaje e indices. |
-| `02_datamart.sql` | Primera configuracion | Crea dimensiones, hechos, relaciones, restricciones y vistas. |
-| `03_validaciones.sql` | Despues de cargar el ETL | Verifica conteos, duplicados, nulos, integridad e incremental. |
-| `04_consultas_kpi.sql` | Pruebas y exposicion | Obtiene los KPIs y rankings del DataMart. |
-
-Normalmente no es necesario ejecutar manualmente `01_staging.sql` ni
-`02_datamart.sql`, porque:
-
-```powershell
-.\.venv\Scripts\python.exe -m etl.setup_database
-```
-
-los lee y ejecuta automáticamente.
-
-`03_validaciones.sql` y `04_consultas_kpi.sql` no se ejecutan durante el
-arranque del sistema. Deben abrirse en MySQL Workbench cuando se quiera
-validar la carga, obtener evidencias o demostrar los resultados durante la
-exposicion.
-
-## Proceso ETL
-
-Carga incremental, sin repetir registros existentes:
-
-```powershell
-.\.venv\Scripts\python.exe -m etl.main --mode incremental
-```
-
-Para demostrar la carga incremental, ejecutar el comando dos veces. En la
-segunda ejecucion, `filas_insertadas` debe ser cero.
-
-## Pruebas
-
-Pruebas unitarias de transformacion:
-
-```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
-```
-
-Pruebas SQL de integridad, conciliacion y calidad:
-
-```text
-sql/03_validaciones.sql
-```
-
-Consultas de verificacion de KPIs:
-
-```text
-sql/04_consultas_kpi.sql
-```
-
-## Dashboard web
-
-El unico dashboard del proyecto es la aplicacion Flask en `web/`.
-
-```powershell
-.\.venv\Scripts\python.exe -m web.app
-```
-
-Abrir `http://localhost:5000`.
-
-Flask sirve el frontend y tambien expone las APIs que consultan la vista
-`vw_creditos_analitica`:
-
-```text
-GET /api/health
-GET /api/filtros
-GET /api/dashboard
-GET /api/dashboard?departamento=LIMA&producto=NMIV
-```
-
-La interfaz incluye:
-
-- KPIs de volumen, ticket, tasa, crecimiento mensual, mejor mes, participacion
-  NMIV y concentracion en Lima.
-- Graficos de tendencia dual, trimestres, productos, plazos, tasas e IFI.
-- Mapa coropletico de Peru por departamento (Leaflet + GeoJSON).
-- Filtros por departamento, producto y tipo de IFI.
-
-El guion sugerido para la demostracion se encuentra en
-`docs/guion_exposicion.md`.
-
-## Scripts academicos
-
-La carpeta `scripts/` no forma parte del runtime del ETL ni del dashboard.
-Sirve para generar documentos y evidencias del avance:
-
-| Script | Salida |
+| Archivo | Uso |
 |---|---|
-| `build_avance2_doc.py` | Documento Word del avance 2 |
-| `build_avance_integrado_apa.py` | Informe integrado estilo APA |
-| `build_avance2_evidence.py` | Capturas / evidencias visuales |
-| `build_avance2_presentation.mjs` | Presentacion (requiere Node.js) |
+| `00_crear_base.sql` | Ejemplo manual de creacion de base |
+| `01_staging.sql` | Tabla de aterrizaje |
+| `02_datamart.sql` | Modelo estrella, FKs y vistas |
+| `03_validaciones.sql` | Conteo, duplicados, integridad (Workbench) |
+| `04_consultas_kpi.sql` | KPIs y rankings de verificacion |
+| `05_rendimiento.sql` | `agg_colocaciones` e indices |
 
-Ejemplo:
+`01` y `02` se aplican con `python -m etl.setup_database`.  
+`03` y `04` se usan en MySQL Workbench para validacion y evidencias.
 
-```powershell
-.\.venv\Scripts\python.exe scripts\build_avance2_doc.py
-```
+---
 
-## Evidencias sugeridas
+## Conocimientos aplicados
 
-1. Tablas y relaciones del esquema en MySQL Workbench.
-2. Consola de la carga inicial.
-3. Consola de una carga incremental con cero filas nuevas.
-4. Contenido de `etl_ejecucion`.
-5. Resultado de las consultas de `03_validaciones.sql`.
-6. Resultado de los KPIs de `04_consultas_kpi.sql`.
-7. Capturas del dashboard con sus filtros y graficos.
+- Modelado dimensional (esquema estrella, grano, hechos y dimensiones)
+- Procesos ETL (limpieza, tipado, deduplicacion, carga incremental)
+- DataMart analitico en MySQL
+- Definicion e interpretacion de KPIs
+- Visualizacion BI (series, rankings, mapa, detalle)
+- Arquitectura en capas (batch ETL / servicio / API / presentacion)
+
+---
+
+## Documentacion adicional
+
+| Recurso | Contenido |
+|---|---|
+| `/proyecto` (en el dashboard) | Ficha academica, stack y modelo |
+| `docs/rendimiento.md` | Agregados e indices del dashboard |
+| `docs/guion_exposicion.md` | Guion sugerido de demostracion |
+| `sql/03_validaciones.sql` | Evidencias de calidad e integridad |
+
+---
+
+## Licencia y datos
+
+Proyecto con fines academicos. Los CSV de colocaciones provienen de fuentes publicas del Fondo Mivivienda; respetar las condiciones de uso de la fuente original.

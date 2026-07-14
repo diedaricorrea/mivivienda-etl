@@ -40,13 +40,16 @@ class WebApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Proyecto academico", response.data)
         self.assertIn(b"Oscar Eduardo Balcazar Chumacero", response.data)
+        self.assertIn(b"76,338", response.data)
+        self.assertIn(b"83,122", response.data)
         self.assertIn(b"fact_credito", response.data)
         self.assertIn(b"Modelo estrella del DataMart", response.data)
         self.assertIn(b"Stack tecnologico", response.data)
         self.assertIn(b"img/stack/python.svg", response.data)
+        self.assertIn(b"img/evidencias/etl_embudo_multianio.png", response.data)
         self.assertIn(b"Conocimientos aplicados", response.data)
+        self.assertIn(b"Proceso ETL", response.data)
         self.assertIn(b"vw_creditos_analitica", response.data)
-        self.assertIn(b"Componentes del DataMart", response.data)
         self.assertIn(b"Indicadores del dashboard", response.data)
 
     def test_health_connects_to_database(self):

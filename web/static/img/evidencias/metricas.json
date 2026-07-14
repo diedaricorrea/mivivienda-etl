@@ -1,0 +1,108 @@
+{
+  "titulo": "ETL Mivivienda · carga multi-anio 2018-2024",
+  "por_archivo": [
+    {
+      "anio": 2018,
+      "archivo": "Data_NCMV_2018.csv",
+      "id_ejecucion": 13,
+      "origen": 9144,
+      "vacias": 0,
+      "invalidas": 0,
+      "duplicados": 74,
+      "transformadas": 9070,
+      "insertadas": 9070,
+      "insertadas_mostrar": 9070
+    },
+    {
+      "anio": 2019,
+      "archivo": "Data_NCMV_2019.csv",
+      "id_ejecucion": 14,
+      "origen": 12224,
+      "vacias": 0,
+      "invalidas": 0,
+      "duplicados": 80,
+      "transformadas": 12144,
+      "insertadas": 12144,
+      "insertadas_mostrar": 12144
+    },
+    {
+      "anio": 2020,
+      "archivo": "Data_NCMV_2020.csv",
+      "id_ejecucion": 15,
+      "origen": 8362,
+      "vacias": 0,
+      "invalidas": 0,
+      "duplicados": 77,
+      "transformadas": 8285,
+      "insertadas": 8285,
+      "insertadas_mostrar": 8285
+    },
+    {
+      "anio": 2021,
+      "archivo": "Data_NCMV_2021.csv",
+      "id_ejecucion": 16,
+      "origen": 12871,
+      "vacias": 0,
+      "invalidas": 8,
+      "duplicados": 161,
+      "transformadas": 12702,
+      "insertadas": 12702,
+      "insertadas_mostrar": 12702
+    },
+    {
+      "anio": 2022,
+      "archivo": "Data_NCMV_2022_0.csv",
+      "id_ejecucion": 17,
+      "origen": 13507,
+      "vacias": 0,
+      "invalidas": 0,
+      "duplicados": 129,
+      "transformadas": 13378,
+      "insertadas": 13378,
+      "insertadas_mostrar": 13378
+    },
+    {
+      "anio": 2023,
+      "archivo": "Colocaciones de crédito Mivivienda_2023.csv",
+      "id_ejecucion": 11,
+      "origen": 13507,
+      "vacias": 2026,
+      "invalidas": 1,
+      "duplicados": 57,
+      "transformadas": 11423,
+      "insertadas": 11423,
+      "insertadas_mostrar": 11423
+    },
+    {
+      "anio": 2024,
+      "archivo": "colocaciones_2024.csv",
+      "id_ejecucion": 12,
+      "origen": 13507,
+      "vacias": 4160,
+      "invalidas": 0,
+      "duplicados": 11,
+      "transformadas": 9336,
+      "insertadas": 0,
+      "insertadas_mostrar": 9336
+    }
+  ],
+  "totales": {
+    "filas_origen": 83122,
+    "filas_vacias": 6186,
+    "filas_invalidas": 9,
+    "duplicados_eliminados": 589,
+    "filas_transformadas": 76338,
+    "filas_insertadas_log": 67002,
+    "filas_insertadas_efectivas": 76338,
+    "hechos_fact_credito": 76338,
+    "archivos": 7
+  },
+  "embudo": {
+    "origen": 83122,
+    "sin_vacias": 76936,
+    "sin_invalidas": 76927,
+    "unicas_tras_dups": 76338,
+    "hechos_cargados": 76338
+  },
+  "nota": "Filas desde MAX(id_ejecucion) por archivo_origen con estado=OK. insertadas_mostrar usa transformadas cuando insertadas_log=0 (carga incremental)."
+}

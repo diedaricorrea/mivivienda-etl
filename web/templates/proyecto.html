@@ -49,18 +49,21 @@
             <section class="about-hero panel">
                 <div class="about-hero-grid">
                     <div>
-                        <h2>Ficha del proyecto</h2>
+                        <h2>1. Presentacion del proyecto</h2>
                         <p>
-                            Solucion academica de Inteligencia de Negocios para el analisis
-                            de <strong>colocaciones de credito del Fondo Mivivienda</strong>
-                            a partir de datos publicos multi-anio. Integra modelado dimensional,
-                            procesos ETL, almacenamiento analitico en MySQL y un tablero web
-                            para apoyar la toma de decisiones.
+                            El presente trabajo constituye una solucion academica de
+                            Inteligencia de Negocios orientada al analisis de las
+                            <strong>colocaciones de credito del Fondo Mivivienda</strong>,
+                            a partir de fuentes publicas correspondientes al periodo
+                            <strong>2018-2024</strong>. La propuesta integra modelado
+                            dimensional en esquema estrella, un proceso ETL reproducible,
+                            un DataMart implementado en MySQL y un dashboard web para
+                            consulta analitica y apoyo a la toma de decisiones.
                         </p>
                         <div class="about-chips">
                             <span>Inteligencia de Negocios</span>
                             <span>Modelo estrella</span>
-                            <span>ETL</span>
+                            <span>ETL multi-anio</span>
                             <span>DataMart + Dashboard BI</span>
                         </div>
                     </div>
@@ -74,45 +77,47 @@
                             <span>Ing. Oscar Eduardo Balcazar Chumacero</span>
                         </article>
                         <article class="about-stat">
-                            <strong>Dominio</strong>
-                            <span>Fondo Mivivienda</span>
+                            <strong>Periodo de datos</strong>
+                            <span>2018 - 2024</span>
                         </article>
                         <article class="about-stat">
-                            <strong>Entrega</strong>
-                            <span>DataMart + dashboard analitico</span>
+                            <strong>Hechos cargados</strong>
+                            <span>76,338 creditos</span>
                         </article>
                     </div>
                 </div>
             </section>
 
             <section class="panel about-block">
-                <h2>Objetivo general</h2>
+                <h2>2. Objetivos</h2>
                 <p class="about-lead">
-                    Disenar e implementar un DataMart dimensional con su proceso ETL y una
-                    capa de visualizacion BI que permita consultar colocaciones por tiempo,
-                    geografia, producto, institucion financiera y plazo, con indicadores
-                    agregados orientados a decision.
+                    <strong>Objetivo general.</strong> Disenar e implementar un DataMart
+                    dimensional con su proceso ETL y una capa de visualizacion BI que
+                    permita analizar colocaciones por tiempo, geografia, producto,
+                    institucion financiera y plazo.
                 </p>
                 <div class="about-grid-3">
                     <div>
-                        <strong>Objetivo 1</strong>
-                        <p>Definir un modelo estrella con grano a nivel de credito desembolsado.</p>
+                        <strong>Objetivo especifico 1</strong>
+                        <p>Definir un modelo estrella cuyo grano sea el credito desembolsado.</p>
                     </div>
                     <div>
-                        <strong>Objetivo 2</strong>
-                        <p>Automatizar extraccion, limpieza, transformacion y carga hacia MySQL.</p>
+                        <strong>Objetivo especifico 2</strong>
+                        <p>Automatizar extraccion, limpieza, transformacion y carga hacia MySQL, con soporte multi-anio e incremental.</p>
                     </div>
                     <div>
-                        <strong>Objetivo 3</strong>
-                        <p>Exponer KPIs, series, rankings, mapa y detalle analitico en un dashboard web.</p>
+                        <strong>Objetivo especifico 3</strong>
+                        <p>Exponer KPIs, series, rankings, mapa y detalle analitico mediante un dashboard web.</p>
                     </div>
                 </div>
             </section>
 
             <section class="panel about-block">
-                <h2>Stack tecnologico</h2>
+                <h2>3. Stack tecnologico</h2>
                 <p class="about-lead">
-                    Tecnologias utilizadas en las capas de datos, backend, presentacion y calidad.
+                    La arquitectura tecnologica se selecciono por adecuacion academica,
+                    reproducibilidad local y claridad de capas (batch ETL, almacenamiento
+                    analitico y presentacion BI).
                 </p>
                 <div class="stack-logo-grid" aria-label="Logos del stack tecnologico">
                     <article class="stack-logo-card">
@@ -204,7 +209,7 @@
                             <tr>
                                 <td>Calidad</td>
                                 <td>unittest</td>
-                                <td>Pruebas de ETL y de la API del dashboard.</td>
+                                <td>Pruebas de transformacion y de la API del dashboard.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -212,42 +217,46 @@
             </section>
 
             <section class="panel about-block">
-                <h2>Conocimientos aplicados</h2>
+                <h2>4. Conocimientos aplicados</h2>
                 <div class="about-grid-3">
                     <div>
                         <strong>Modelado dimensional</strong>
-                        <p>Esquema estrella, tabla de hechos, dimensiones conformadas y grano analitico.</p>
+                        <p>Esquema estrella, hechos, dimensiones conformadas y definicion de grano analitico.</p>
                     </div>
                     <div>
                         <strong>Procesos ETL</strong>
-                        <p>Limpieza, tipado, deduplicacion, carga inicial/incremental y auditoria.</p>
+                        <p>Extraccion, limpieza, tipado, deduplicacion, carga inicial e incremental.</p>
                     </div>
                     <div>
                         <strong>DataMart analitico</strong>
-                        <p>MySQL como almacenamiento orientado a consulta y agregacion de negocio.</p>
+                        <p>Almacenamiento orientado a consulta, vistas analiticas y agregados de lectura.</p>
                     </div>
                     <div>
                         <strong>KPIs e indicadores</strong>
-                        <p>Definicion de medidas, ratios y lecturas para toma de decisiones.</p>
+                        <p>Medidas, ratios y criterios de interpretacion para decision.</p>
                     </div>
                     <div>
                         <strong>Visualizacion BI</strong>
-                        <p>Tablero ejecutivo, series temporales, rankings, mapa y detalle transaccional.</p>
+                        <p>Tablero ejecutivo, series, rankings, mapa territorial y detalle transaccional.</p>
                     </div>
                     <div>
                         <strong>Arquitectura en capas</strong>
-                        <p>Separacion ETL / servicio / API / presentacion, con filtros compartidos.</p>
+                        <p>Separacion entre batch ETL, servicio de consulta, API y presentacion.</p>
                     </div>
                 </div>
             </section>
 
             <section class="panel about-block">
-                <h2>Arquitectura de la solucion</h2>
+                <h2>5. Arquitectura de la solucion</h2>
+                <p class="about-lead">
+                    El flujo metodologico sigue el recorrido tipico de un proyecto BI:
+                    fuente → ETL → DataMart dimensional → servicio analitico → dashboard.
+                </p>
                 <div class="pipeline" aria-label="Arquitectura del proyecto BI">
                     <div class="pipeline-step">
                         <span class="pipeline-num">01</span>
                         <strong>Fuentes</strong>
-                        <small>CSV publicos Mivivienda</small>
+                        <small>CSV publicos 2018-2024</small>
                     </div>
                     <span class="pipeline-arrow" aria-hidden="true">→</span>
                     <div class="pipeline-step">
@@ -259,7 +268,7 @@
                     <div class="pipeline-step">
                         <span class="pipeline-num">03</span>
                         <strong>DataMart</strong>
-                        <small>MySQL · modelo estrella</small>
+                        <small>MySQL · estrella</small>
                     </div>
                     <span class="pipeline-arrow" aria-hidden="true">→</span>
                     <div class="pipeline-step">
@@ -285,19 +294,19 @@
             <section class="panel about-block">
                 <div class="panel-header">
                     <div>
-                        <h2>Modelo estrella del DataMart</h2>
+                        <h2>6. Modelo estrella del DataMart</h2>
                         <p class="panel-sub">
-                            Definido en <code>sql/02_datamart.sql</code>
+                            Definicion fisica en <code>sql/02_datamart.sql</code>
                             · grano: un credito desembolsado
                         </p>
                     </div>
                 </div>
                 <p class="about-lead">
-                    La <strong>tabla de hechos no es el KPI</strong>:
-                    <code>fact_credito</code> almacena cada operacion (medidas + claves foraneas).
-                    Los indicadores del dashboard son <strong>agregaciones</strong> calculadas
-                    sobre hechos y dimensiones, principalmente a traves de
-                    <code>vw_creditos_analitica</code> y tablas agregadas de rendimiento.
+                    La tabla de hechos <code>fact_credito</code> no equivale a un KPI.
+                    Almacena cada operacion con sus medidas y claves foraneas.
+                    Los indicadores del dashboard son agregaciones calculadas sobre
+                    hechos y dimensiones, principalmente mediante
+                    <code>vw_creditos_analitica</code> y <code>agg_colocaciones</code>.
                 </p>
 
                 <div class="star-schema" role="img" aria-label="Diagrama del modelo estrella">
@@ -358,79 +367,157 @@
                 <div class="schema-note">
                     <p>
                         Complementos: <code>stg_colocaciones_mivivienda</code> (staging),
-                        <code>etl_ejecucion</code> (auditoria),
-                        <code>vw_creditos_analitica</code> (hechos + dimensiones) y
-                        <code>agg_colocaciones</code> (agregados para rendimiento).
+                        <code>etl_ejecucion</code> (auditoria de carga),
+                        <code>vw_creditos_analitica</code> (JOIN analitico) y
+                        <code>agg_colocaciones</code> (agregados de rendimiento).
                     </p>
                 </div>
             </section>
 
             <section class="panel about-block">
-                <h2>Componentes del DataMart y del dashboard</h2>
+                <h2>7. Proceso ETL: extraccion, transformacion, limpieza y carga</h2>
+                <p class="about-lead">
+                    El ETL se ejecuta como proceso batch (<code>python -m etl.main</code>)
+                    sobre los siete CSV depositados en <code>datos/</code>. Cada ejecucion
+                    queda registrada en <code>etl_ejecucion</code> para trazabilidad academica
+                    y control de calidad.
+                </p>
+
+                <div class="about-grid-3">
+                    <div>
+                        <strong>7.1 Extraccion</strong>
+                        <p>
+                            Lectura de CSV publicos multi-anio (2018-2024), con deteccion
+                            de separador y homogenizacion de las 14 columnas de negocio.
+                        </p>
+                    </div>
+                    <div>
+                        <strong>7.2 Limpieza</strong>
+                        <p>
+                            Eliminacion de filas vacias, descarte de registros invalidos
+                            y remocion de duplicados exactos mediante <code>record_hash</code>.
+                        </p>
+                    </div>
+                    <div>
+                        <strong>7.3 Transformacion</strong>
+                        <p>
+                            Tipado de fechas, montos y tasas; normalizacion de ubigeo,
+                            producto, IFI y plazos; preparacion de claves dimensionales.
+                        </p>
+                    </div>
+                </div>
+                <div class="about-grid-3" style="margin-top:12px">
+                    <div>
+                        <strong>7.4 Carga</strong>
+                        <p>
+                            Insercion a staging, upsert de dimensiones y carga de hechos
+                            en <code>fact_credito</code> (modo <code>initial</code> o <code>incremental</code>).
+                        </p>
+                    </div>
+                    <div>
+                        <strong>7.5 Post-carga</strong>
+                        <p>
+                            Refresco de <code>agg_colocaciones</code>, aseguramiento de indices
+                            y registro de metricas de calidad en auditoria.
+                        </p>
+                    </div>
+                    <div>
+                        <strong>7.6 Resultado consolidado</strong>
+                        <p>
+                            <strong>76,338</strong> hechos en el DataMart, coherentes con la
+                            suma de transformadas por anio tras limpieza.
+                        </p>
+                    </div>
+                </div>
+
+                <h3 class="about-subtitle" style="margin-top:22px">7.7 Resultado consolidado multi-anio</h3>
                 <div class="avance-table-wrap">
                     <table class="avance-table">
                         <thead>
                             <tr>
-                                <th>Componente</th>
-                                <th>Definicion</th>
-                                <th>Rol en la solucion</th>
+                                <th>Indicador de calidad</th>
+                                <th>Valor (2018-2024)</th>
+                                <th>Interpretacion</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td><code>fact_credito</code></td>
-                                <td>Tabla de hechos</td>
-                                <td>Almacena cada credito: montos, tasa, cantidad y FKs dimensionales.</td>
+                                <td>Filas de origen (7 archivos)</td>
+                                <td><strong>83,122</strong></td>
+                                <td>Universo bruto leido desde la fuente.</td>
                             </tr>
                             <tr>
-                                <td>Dimensiones</td>
-                                <td>Tablas de contexto</td>
-                                <td>Tiempo, geografia, producto, IFI y plazo para segmentar el analisis.</td>
+                                <td>Filas vacias eliminadas</td>
+                                <td><strong>6,186</strong></td>
+                                <td>Principalmente en 2023 y 2024.</td>
                             </tr>
                             <tr>
-                                <td><code>vw_creditos_analitica</code></td>
-                                <td>Vista SQL analitica</td>
-                                <td>Centraliza el JOIN hechos + dimensiones para consulta BI.</td>
+                                <td>Filas invalidas descartadas</td>
+                                <td><strong>9</strong></td>
+                                <td>Registros no tipables o inconsistentes.</td>
                             </tr>
                             <tr>
-                                <td>KPIs</td>
-                                <td>Indicadores agregados</td>
-                                <td><code>SUM</code>/<code>AVG</code>/% calculados sobre el DataMart.</td>
+                                <td>Duplicados exactos removidos</td>
+                                <td><strong>589</strong></td>
+                                <td>Controlados por <code>record_hash</code>.</td>
                             </tr>
                             <tr>
-                                <td>Dashboard</td>
-                                <td>Capa de presentacion</td>
-                                <td>Consume la API Flask y renderiza tableros por ruta de analisis.</td>
+                                <td>Hechos en <code>fact_credito</code></td>
+                                <td><strong>76,338</strong></td>
+                                <td>Base analitica definitiva del proyecto.</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-            </section>
+                <p class="about-lead" style="margin-top:12px">
+                    Nota metodologica: la cifra <strong>9,336</strong> corresponde unicamente
+                    al archivo de <strong>2024</strong> tras limpieza. No representa el total
+                    del DataMart multi-anio.
+                </p>
 
-            <section class="panel about-block">
-                <h2>Proceso ETL</h2>
-                <div class="dashboard-row row-about">
-                    <article>
-                        <h3 class="about-subtitle">Etapas implementadas</h3>
-                        <ol class="about-list about-ol">
-                            <li>Extraccion de CSV publicos de colocaciones Mivivienda.</li>
-                            <li>Limpieza de filas vacias y eliminacion de duplicados.</li>
-                            <li>Transformacion de fechas, montos, tasas, ubigeo y plazos.</li>
-                            <li>Carga a dimensiones y a <code>fact_credito</code>.</li>
-                            <li>Carga incremental controlada con <code>record_hash</code>.</li>
-                            <li>Refresco de agregados e indices de rendimiento.</li>
-                        </ol>
-                    </article>
-                    <article>
-                        <h3 class="about-subtitle">Consumo analitico</h3>
-                        <ol class="about-list about-ol">
-                            <li>Flask invoca <code>DashboardService</code>.</li>
-                            <li>El servicio consulta vistas y agregados del DataMart.</li>
-                            <li>Se calculan KPIs, series, rankings y detalle paginado.</li>
-                            <li>La API <code>/api/dashboard</code> entrega JSON al cliente.</li>
-                            <li>Chart.js, Leaflet y tablas renderizan el resultado filtrado.</li>
-                        </ol>
-                    </article>
+                <h3 class="about-subtitle">7.8 Evidencias de ejecucion</h3>
+                <p class="about-lead">
+                    Las siguientes capturas se generaron a partir de las ejecuciones
+                    registradas en MySQL (<code>etl_ejecucion</code>) y del conteo actual
+                    de <code>fact_credito</code>.
+                </p>
+
+                <div class="evidence-grid">
+                    <figure class="evidence-figure">
+                        <img
+                            src="{{ url_for('static', filename='img/evidencias/etl_resumen_consola.png') }}"
+                            alt="Resumen consolidado de la ejecucion ETL multi-anio"
+                            loading="lazy"
+                        >
+                        <figcaption>
+                            <strong>Figura 1.</strong> Resumen consolidado de la carga ETL
+                            multi-anio (2018-2024): origen, limpieza y hechos finales.
+                        </figcaption>
+                    </figure>
+
+                    <figure class="evidence-figure">
+                        <img
+                            src="{{ url_for('static', filename='img/evidencias/etl_embudo_multianio.png') }}"
+                            alt="Embudo de calidad ETL multi-anio"
+                            loading="lazy"
+                        >
+                        <figcaption>
+                            <strong>Figura 2.</strong> Embudo de calidad ETL multi-anio:
+                            de 83,122 filas de origen a 76,338 hechos cargados.
+                        </figcaption>
+                    </figure>
+
+                    <figure class="evidence-figure evidence-figure-wide">
+                        <img
+                            src="{{ url_for('static', filename='img/evidencias/etl_calidad_por_anio.png') }}"
+                            alt="Tabla de calidad ETL por anio"
+                            loading="lazy"
+                        >
+                        <figcaption>
+                            <strong>Figura 3.</strong> Detalle de calidad por anio y archivo
+                            fuente (origen, vacias, invalidas, duplicados, transformadas e insertadas).
+                        </figcaption>
+                    </figure>
                 </div>
             </section>
 
@@ -439,7 +526,7 @@
                     <div class="panel-header">
                         <div>
                             <h2>Embudo de calidad del ETL</h2>
-                            <p class="panel-sub">Ejemplo de trazabilidad fuente → DataMart (carga 2024)</p>
+                            <p class="panel-sub">Consolidado multi-anio 2018-2024 (no solo 2024)</p>
                         </div>
                     </div>
                     <div class="chart-container chart-mid">
@@ -449,8 +536,8 @@
                 <article class="panel">
                     <div class="panel-header">
                         <div>
-                            <h2>Resultado de la carga</h2>
-                            <p class="panel-sub">Distribucion de filas origen en el ejemplo 2024</p>
+                            <h2>Distribucion del resultado de carga</h2>
+                            <p class="panel-sub">Hechos cargados vs descartes de calidad</p>
                         </div>
                     </div>
                     <div class="chart-container chart-doughnut">
@@ -460,11 +547,40 @@
             </section>
 
             <section class="panel about-block">
-                <h2>Indicadores del dashboard</h2>
+                <h2>8. Hechos cargados por anio</h2>
+                <div class="avance-table-wrap">
+                    <table class="avance-table">
+                        <thead>
+                            <tr>
+                                <th>Anio</th>
+                                <th>Hechos en fact_credito</th>
+                                <th>Participacion</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>2018</td><td>9,070</td><td>11.9%</td></tr>
+                            <tr><td>2019</td><td>12,144</td><td>15.9%</td></tr>
+                            <tr><td>2020</td><td>8,285</td><td>10.9%</td></tr>
+                            <tr><td>2021</td><td>12,702</td><td>16.6%</td></tr>
+                            <tr><td>2022</td><td>13,378</td><td>17.5%</td></tr>
+                            <tr><td>2023</td><td>11,423</td><td>15.0%</td></tr>
+                            <tr><td>2024</td><td>9,336</td><td>12.2%</td></tr>
+                            <tr>
+                                <td><strong>Total</strong></td>
+                                <td><strong>76,338</strong></td>
+                                <td><strong>100%</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel about-block">
+                <h2>9. Indicadores del dashboard</h2>
                 <p class="about-lead">
-                    Un KPI no es una fila de la tabla de hechos. Es un indicador de negocio
-                    calculado a partir de las medidas de <code>fact_credito</code> y de los
-                    atributos dimensionales.
+                    Un KPI es un indicador de negocio calculado sobre las medidas de
+                    <code>fact_credito</code> y los atributos dimensionales. No constituye
+                    una fila de la tabla de hechos.
                 </p>
                 <div class="avance-table-wrap">
                     <table class="avance-table">
@@ -473,7 +589,6 @@
                                 <th>KPI</th>
                                 <th>Calculo</th>
                                 <th>Utilidad analitica</th>
-                                <th>Ubicacion</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -481,49 +596,31 @@
                                 <td>Cantidad de creditos</td>
                                 <td><code>SUM(cantidad_creditos)</code></td>
                                 <td>Volumen operativo de colocaciones.</td>
-                                <td>Resumen</td>
                             </tr>
                             <tr>
                                 <td>Monto total</td>
                                 <td><code>SUM(monto_credito)</code></td>
-                                <td>Capital colocado (impacto financiero).</td>
-                                <td>Resumen / export</td>
+                                <td>Capital colocado.</td>
                             </tr>
                             <tr>
                                 <td>Ticket promedio</td>
                                 <td><code>AVG(monto_credito)</code></td>
                                 <td>Tamano tipico del credito.</td>
-                                <td>Resumen</td>
                             </tr>
                             <tr>
                                 <td>Tasa promedio</td>
                                 <td><code>AVG(tasa_interes)</code></td>
-                                <td>Condiciones de precio del credito.</td>
-                                <td>Resumen</td>
+                                <td>Condiciones de precio.</td>
                             </tr>
                             <tr>
-                                <td>Crecimiento periodo</td>
-                                <td>Variacion % vs periodo comparable</td>
-                                <td>Aceleracion o caida de colocacion.</td>
-                                <td>Resumen</td>
+                                <td>Crecimiento / mejor periodo</td>
+                                <td>Variacion % y maximo de serie</td>
+                                <td>Dinamica temporal de colocacion.</td>
                             </tr>
                             <tr>
-                                <td>Mejor periodo</td>
-                                <td>Mayor <code>SUM(monto)</code></td>
-                                <td>Pico de colocacion en la serie.</td>
-                                <td>Resumen</td>
-                            </tr>
-                            <tr>
-                                <td>Participacion NMIV/NCMV</td>
-                                <td>% monto producto / total</td>
-                                <td>Concentracion por linea de producto.</td>
-                                <td>Resumen / analisis</td>
-                            </tr>
-                            <tr>
-                                <td>Concentracion Lima</td>
-                                <td>% monto Lima / total</td>
-                                <td>Sesgo geografico de la colocacion.</td>
-                                <td>Resumen / mapa</td>
+                                <td>Participacion NMIV/NCMV y Lima</td>
+                                <td>Ratios sobre monto</td>
+                                <td>Concentracion por producto y geografia.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -531,77 +628,77 @@
             </section>
 
             <section class="panel about-block">
-                <h2>Modulos del dashboard</h2>
+                <h2>10. Modulos del dashboard</h2>
                 <div class="about-grid-3">
                     <div>
                         <strong>Resumen</strong>
-                        <p>KPIs ejecutivos, mapa, series, analisis comparativo y detalle en una sola vista.</p>
+                        <p>Vista ejecutiva integral: KPIs, mapa, series, analisis y detalle.</p>
                     </div>
                     <div>
                         <strong>Tendencias / Analisis</strong>
-                        <p>Rutas enfocadas para evolucion temporal y comparacion por producto, IFI y geografia.</p>
+                        <p>Rutas enfocadas para evolucion temporal y comparacion dimensional.</p>
                     </div>
                     <div>
                         <strong>Mapa / Detalle</strong>
-                        <p>Coropleta territorial interactiva y tabla paginada con exportacion Excel/CSV.</p>
+                        <p>Coropleta territorial interactiva y tabla paginada con exportacion.</p>
                     </div>
                 </div>
             </section>
 
             <section class="panel about-block">
-                <h2>Hallazgos analiticos representativos</h2>
+                <h2>11. Hallazgos analiticos</h2>
                 <ol class="about-list about-ol">
                     <li>
-                        <strong>Volumen:</strong> el DataMart concentra una base nacional suficiente
-                        para analisis por anio, producto e institucion.
+                        <strong>Cobertura:</strong> el DataMart consolida 76,338 creditos
+                        entre 2018 y 2024, con densidad suficiente para analisis nacional.
                     </li>
                     <li>
-                        <strong>Geografia:</strong> Lima concentra la mayor participacion del monto;
-                        el mapa facilita priorizar regiones.
+                        <strong>Calidad de fuente:</strong> el embudo evidencia descartes
+                        relevantes por vacios (6,186) y duplicados (589), justificando el ETL.
                     </li>
                     <li>
-                        <strong>Producto:</strong> NMIV/NCMV lideran la colocacion frente a lineas
-                        complementarias (FCTP, MT, SCRC).
+                        <strong>Geografia y producto:</strong> el tablero permite medir
+                        concentracion territorial (p. ej. Lima) y por linea (NMIV/NCMV, FCTP, MT, SCRC).
                     </li>
                     <li>
-                        <strong>Decision:</strong> los filtros por periodo, geografia, producto y tipo
-                        de IFI permiten acotar el universo de analisis de forma consistente.
+                        <strong>Decision:</strong> los filtros compartidos (periodo, geografia,
+                        producto, tipo IFI) mantienen un universo coherente entre vistas.
                     </li>
                 </ol>
             </section>
 
             <section class="dashboard-row row-about">
                 <article class="panel">
-                    <h2>Conclusiones</h2>
+                    <h2>12. Conclusiones</h2>
                     <ul class="about-list">
-                        <li><strong>Metodologia:</strong> se demostro el flujo fuente → ETL → modelo estrella → dashboard.</li>
-                        <li><strong>Producto academico:</strong> DataMart consultable con indicadores orientados a decision.</li>
-                        <li><strong>Trazabilidad:</strong> staging, hash de carga y pruebas automatizadas respaldan la solucion.</li>
+                        <li>Se demostro el flujo completo fuente → ETL → modelo estrella → dashboard.</li>
+                        <li>El DataMart multi-anio queda trazable mediante <code>etl_ejecucion</code> y pruebas automatizadas.</li>
+                        <li>La capa BI traduce hechos dimensionales en indicadores orientados a decision.</li>
                     </ul>
                 </article>
                 <article class="panel">
-                    <h2>Lineas de mejora</h2>
+                    <h2>13. Lineas de mejora</h2>
                     <ul class="about-list">
                         <li>Incorporar dimensiones adicionales (canal, moneda o segmento de vivienda).</li>
-                        <li>Mantener carga incremental y monitoreo de calidad de datos.</li>
-                        <li>Evaluar publicacion hacia Power BI u otra herramienta corporativa.</li>
+                        <li>Automatizar monitoreo periodico de calidad de datos.</li>
+                        <li>Evaluar publicacion hacia herramientas corporativas (p. ej. Power BI).</li>
                     </ul>
                 </article>
             </section>
 
             <section class="dashboard-row row-about">
                 <article class="panel">
-                    <h2>Uso del dashboard</h2>
+                    <h2>14. Uso del dashboard</h2>
                     <ol class="about-list about-ol">
                         <li>Abrir <code>http://127.0.0.1:5000</code>.</li>
-                        <li>Verificar el estado de conexion MySQL en la sidebar.</li>
+                        <li>Verificar el estado de conexion MySQL.</li>
                         <li>Aplicar filtros de periodo, geografia, producto y tipo de IFI.</li>
                         <li>Navegar Resumen, Tendencias, Mapa, Analisis y Detalle.</li>
                         <li>Exportar evidencias en Excel o CSV segun se requiera.</li>
                     </ol>
                 </article>
                 <article class="panel">
-                    <h2>Documentacion de referencia</h2>
+                    <h2>15. Documentacion de referencia</h2>
                     <ul class="about-list">
                         <li><code>README.md</code> — instalacion y arquitectura</li>
                         <li><code>sql/02_datamart.sql</code> — modelo estrella</li>
@@ -614,7 +711,7 @@
             <section class="panel about-cta">
                 <div>
                     <h2>Explorar la solucion</h2>
-                    <p>Accede al dashboard analitico construido sobre el DataMart Mivivienda.</p>
+                    <p>Accede al dashboard analitico construido sobre el DataMart multi-anio.</p>
                 </div>
                 <a class="primary-button about-cta-button" href="{{ url_for('index') }}">
                     Ir al dashboard
@@ -635,6 +732,7 @@
                     mint: styles.getPropertyValue("--chart-2").trim() || "#00e096",
                     amber: styles.getPropertyValue("--chart-3").trim() || "#ffcf4b",
                     coral: styles.getPropertyValue("--chart-6").trim() || "#f93c65",
+                    sky: styles.getPropertyValue("--chart-4").trim() || "#0095ff",
                     text: styles.getPropertyValue("--chart-text").trim() || "#737791",
                     grid: styles.getPropertyValue("--chart-grid").trim() || "rgba(0,0,0,.08)",
                     surface: styles.getPropertyValue("--surface").trim() || "#fff",
@@ -658,11 +756,17 @@
                 qualityChart = new Chart(qualityCtx, {
                     type: "bar",
                     data: {
-                        labels: ["Leidas", "No vacias", "Unicas", "Cargadas"],
+                        labels: [
+                            "Origen",
+                            "Sin vacias",
+                            "Sin invalidas",
+                            "Unicas",
+                            "Hechos",
+                        ],
                         datasets: [{
                             label: "Filas",
-                            data: [13507, 9347, 9336, 9336],
-                            backgroundColor: [c.coral, c.amber, c.primary, c.mint],
+                            data: [83122, 76936, 76927, 76338, 76338],
+                            backgroundColor: [c.coral, c.amber, c.sky, c.primary, c.mint],
                             borderRadius: 8,
                             barPercentage: 0.55,
                         }],
@@ -694,10 +798,10 @@
                 outcomeChart = new Chart(outcomeCtx, {
                     type: "doughnut",
                     data: {
-                        labels: ["Cargadas", "Vacias", "Duplicados"],
+                        labels: ["Hechos cargados", "Vacias", "Duplicados", "Invalidas"],
                         datasets: [{
-                            data: [9336, 4160, 11],
-                            backgroundColor: [c.mint, c.coral, c.amber],
+                            data: [76338, 6186, 589, 9],
+                            backgroundColor: [c.mint, c.coral, c.amber, c.sky],
                             borderColor: c.surface,
                             borderWidth: 3,
                         }],
