@@ -1102,6 +1102,9 @@ function colorScale(value, maxValue, colors) {
 
 function renderMapLegend(maxAmount, colors) {
     const legend = document.querySelector("#map-legend");
+    if (!legend) {
+        return;
+    }
     const steps = [
         { label: "Sin datos", color: colors.map[0] },
         { label: "Bajo", color: colors.map[1] },
@@ -1179,6 +1182,9 @@ function renderChart(key, canvasId, config) {
 
 function updateTable(rows, meta = {}) {
     const body = document.querySelector("#detail-body");
+    if (!body) {
+        return;
+    }
     const page = meta.page || 1;
     const pageSize = meta.page_size || DETAIL_PAGE_SIZE;
     const total = meta.total || 0;
