@@ -63,7 +63,8 @@ class WebApiTests(unittest.TestCase):
         self.assertIn(b"kpi_focus", response.data)
         self.assertIn(b"contexto_universo", response.data)
         self.assertIn(b"resumen_serie", response.data)
-        self.assertIn(b"Guion breve para exposicion", response.data)
+        self.assertIn(b"En resumen:", response.data)
+        self.assertIn(b"existe una API en el backend", response.data)
 
     def test_yoy_supports_custom_year_pair(self):
         response = self.client.get("/api/dashboard?anio=2024&anio_comp=2018")
