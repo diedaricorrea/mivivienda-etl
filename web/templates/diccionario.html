@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diccionario de datos · BI Mivivienda</title>
+    <script>
+        (function () {
+            const saved = localStorage.getItem("mivivienda-theme");
+            const theme = saved === "light" || saved === "dark"
+                ? saved
+                : "light";
+            document.documentElement.setAttribute("data-theme", theme);
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="app-shell">
+        {% set active_page = 'diccionario' %}
+        {% include 'partials/sidebar.html' %}
+
+        <main class="content about-page dictionary-page">
+            <header class="topbar">
+                <div>
+                    <p class="panel-sub" style="margin:0 0 6px">
+                        Catalogo oficial de variables de la fuente
+                    </p>
+                    <h1>Diccionario de datos</h1>
+                </div>
+                <div class="topbar-actions">
+                    <button
+                        id="theme-toggle"
+                        class="icon-chip"
+                        type="button"
+                        aria-label="Cambiar tema"
+                    >
+                        <span class="theme-toggle-icon" aria-hidden="true"></span>
+                        <span id="theme-toggle-label">Modo oscuro</span>
+                    </button>
+                    <a class="primary-link" href="{{ url_for('index') }}">Abrir dashboard</a>
+                </div>
+            </header>
+
+            <section class="panel dictionary-hero">
+                <div>
+                    <h2 id="dictionary-title">Cargando diccionario...</h2>
+                    <p id="dictionary-subtitle" class="panel-sub">
+                        Se lee desde el Excel oficial publicado con las colocaciones.
+                    </p>
+                </div>
+                <div class="dictionary-stats" aria-label="Resumen del diccionario">
+                    <article>
+                        <strong id="dictionary-count">--</strong>
+                        <span>Variables</span>
+                    </article>
+                    <article>
+                        <strong id="dictionary-file">--</strong>
+                        <span>Archivo fuente</span>
+                    </article>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Variables del dataset</h2>
+                        <p class="panel-sub">Definicion, tipo y formato de cada campo</p>
+                    </div>
+                    <label class="dictionary-search">
+                        Buscar
+                        <input
+                            id="dictionary-search"
+                            type="search"
+                            placeholder="Ej. TASA, UBIGEO, PRODUCTO"
+                            autocomplete="off"
+                        >
+                    </label>
+                </div>
+                <div class="table-wrapper">
+                    <table class="dictionary-table">
+                        <thead>
+                            <tr>
+                                <th>Variable</th>
+                                <th>Descripcion</th>
+                                <th>Tipo</th>
+                                <th>Tamano</th>
+                                <th>Info adicional</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dictionary-body">
+                            <tr>
+                                <td colspan="5">Cargando variables...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel" id="dictionary-notes-panel" hidden>
+                <div class="panel-header">
+                    <div>
+                        <h2>Notas del origen</h2>
+                        <p class="panel-sub">Aclaraciones del Fondo Mivivienda sobre productos</p>
+                    </div>
+                </div>
+                <ul id="dictionary-notes" class="dictionary-notes"></ul>
+            </section>
+
+            <div id="error-toast" class="toast" role="alert"></div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dictionary.js') }}"></script>
+</body>
+</html>

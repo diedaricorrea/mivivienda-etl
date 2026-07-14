@@ -44,7 +44,7 @@ organizo de una forma similar a una aplicacion Spring Boot:
 | `Service` | `web/services/dashboard_service.py` | Contiene la logica del dashboard y aplica filtros. |
 | `Repository` | `DashboardService` mediante SQLAlchemy | Ejecuta consultas parametrizadas contra MySQL. |
 | `Entity` | Tablas y vistas definidas en `sql/` | El esquema se define con SQL; no se utiliza ORM. |
-| `application.properties` | `.env` | Guarda host, puerto, base, usuario y clave. |
+| `application.properties` | `.env` + `config/conexion.py` | Guarda host, puerto, base, usuario y clave. |
 | `templates` | `web/templates/` | Contiene el HTML servido por Flask. |
 | `static` | `web/static/` | Contiene CSS y JavaScript. |
 | `RestController` | Rutas `/api/*` de Flask | Devuelve informacion JSON al navegador. |
@@ -57,13 +57,17 @@ sobre la vista `vw_creditos_analitica`.
 El modulo `etl/` tampoco forma parte del backend web. Es un proceso batch
 independiente que prepara y carga los datos antes de iniciar el dashboard.
 
+La configuracion compartida (`.env`, ruta del CSV y motores SQLAlchemy) vive
+en `config/`, para que ETL, web y scripts no se acoplen entre si.
+
 ## Estructura de carpetas
 
 ```text
-mivivienda_etl/
+mivivienda-etl/
+|-- config/                 .env, rutas y conexion MySQL compartida
 |-- datos/                  CSV de origen
 |-- etl/                    Extraccion, transformacion y carga
-|-- sql/                    Creacion y validacion del DataMart
+|-- sql/                    Creacion, validacion e indices del DataMart
 |-- web/
 |   |-- app.py              Controlador Flask y APIs
 |   |-- services/           Logica y consultas del dashboard
@@ -73,10 +77,15 @@ mivivienda_etl/
 |       |-- js/             fetch, filtros, graficos, mapa y tabla
 |       `-- geo/            GeoJSON de departamentos del Peru
 |-- tests/                  Pruebas ETL y API
+|-- scripts/                Utilidades academicas (docs, evidencias, PPT)
 |-- docs/                   Informe, guion y evidencias
 |-- .env.example            Ejemplo de configuracion
 `-- requirements.txt        Dependencias Python
 ```
+
+El dashboard consulta una tabla agregada `agg_colocaciones` (refrescada al final del ETL)
+para KPIs y graficos. El detalle analitico sigue leyendo `vw_creditos_analitica`
+con paginacion.
 
 ## Modelo estrella
 
@@ -107,7 +116,7 @@ misma fila.
 Todos los comandos deben ejecutarse desde la carpeta raiz:
 
 ```powershell
-cd ruta\al\proyecto\mivivienda_etl
+cd ruta\al\proyecto\mivivienda-etl
 ```
 
 ### Primera ejecucion
@@ -172,21 +181,25 @@ sql/01_staging.sql
 sql/02_datamart.sql
 ```
 
-#### 7. Ejecutar la carga inicial
+#### 7. Ejecutar la carga (todos los anios)
 
-La carga inicial limpia dimensiones y hechos antes de cargar el archivo:
+Por defecto el ETL carga **todos** los CSV de `datos/` (2018-2024).
+Con `initial` reinicia el Datamart y luego inserta cada archivo:
 
 ```powershell
 .\.venv\Scripts\python.exe -m etl.main --mode initial
 ```
 
-El resultado esperado es:
+Si solo quieres agregar archivos nuevos sin borrar lo existente:
 
-```text
-Filas leidas: 13,507
-Filas vacias: 4,160
-Duplicados eliminados: 11
-Hechos insertados: 9,336
+```powershell
+.\.venv\Scripts\python.exe -m etl.main --mode incremental
+```
+
+Para un solo archivo:
+
+```powershell
+.\.venv\Scripts\python.exe -m etl.main --mode incremental --csv .\datos\Data_NCMV_2018.csv
 ```
 
 #### 8. Ejecutar las pruebas
@@ -330,6 +343,24 @@ La interfaz incluye:
 
 El guion sugerido para la demostracion se encuentra en
 `docs/guion_exposicion.md`.
+
+## Scripts academicos
+
+La carpeta `scripts/` no forma parte del runtime del ETL ni del dashboard.
+Sirve para generar documentos y evidencias del avance:
+
+| Script | Salida |
+|---|---|
+| `build_avance2_doc.py` | Documento Word del avance 2 |
+| `build_avance_integrado_apa.py` | Informe integrado estilo APA |
+| `build_avance2_evidence.py` | Capturas / evidencias visuales |
+| `build_avance2_presentation.mjs` | Presentacion (requiere Node.js) |
+
+Ejemplo:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\build_avance2_doc.py
+```
 
 ## Evidencias sugeridas
 

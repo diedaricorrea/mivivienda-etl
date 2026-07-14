@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 from sqlalchemy import text
 
-from .conexion import get_engine
+from config.conexion import get_engine
 
 
 STAGING_TABLE = "stg_colocaciones_mivivienda"
@@ -23,6 +23,18 @@ def reset_datamart() -> None:
     with get_engine().begin() as conn:
         for statement in statements:
             conn.execute(text(statement))
+        agg_exists = conn.execute(
+            text(
+                """
+                SELECT COUNT(*)
+                FROM information_schema.tables
+                WHERE table_schema = DATABASE()
+                  AND table_name = 'agg_colocaciones'
+                """
+            )
+        ).scalar_one()
+        if agg_exists:
+            conn.execute(text("TRUNCATE TABLE agg_colocaciones"))
     print("[LOAD] Datamart reiniciado para carga inicial")
 
 
@@ -167,6 +179,92 @@ def load_datamart() -> int:
     print(f"[LOAD] Hechos nuevos insertados: {inserted:,}")
     print(f"[LOAD] Total en fact_credito: {after:,}")
     return inserted
+
+
+def ensure_aggregate_table() -> None:
+    """Crea agg_colocaciones e indices si faltan."""
+    sql_file = Path(__file__).resolve().parents[1] / "sql" / "05_rendimiento.sql"
+    with get_engine().begin() as conn:
+        sql = sql_file.read_text(encoding="utf-8")
+        for fragment in sql.split(";"):
+            lines = [
+                line for line in fragment.splitlines()
+                if not line.strip().startswith("--")
+            ]
+            statement = "\n".join(lines).strip()
+            if statement:
+                conn.exec_driver_sql(statement)
+    ensure_performance_indexes()
+
+
+def refresh_aggregates() -> None:
+    """Reconstruye agg_colocaciones para consultas analiticas rapidas."""
+    ensure_aggregate_table()
+    with get_engine().begin() as conn:
+        conn.execute(text("TRUNCATE TABLE agg_colocaciones"))
+        conn.execute(
+            text(
+                """
+                INSERT INTO agg_colocaciones (
+                    anio, mes_numero, mes_nombre, trimestre,
+                    departamento, codigo_producto, tipo_ifi, nombre_ifi,
+                    categoria_plazo, plazo_min, cantidad_creditos,
+                    monto_total, suma_tasa, suma_plazo
+                )
+                SELECT
+                    anio,
+                    mes_numero,
+                    mes_nombre,
+                    trimestre,
+                    departamento,
+                    codigo_producto,
+                    tipo_ifi,
+                    nombre_ifi,
+                    categoria_plazo,
+                    MIN(plazo_meses),
+                    SUM(cantidad_creditos),
+                    ROUND(SUM(monto_credito), 2),
+                    ROUND(SUM(tasa_interes * cantidad_creditos), 4),
+                    ROUND(SUM(plazo_meses * cantidad_creditos), 2)
+                FROM vw_creditos_analitica
+                GROUP BY
+                    anio, mes_numero, mes_nombre, trimestre,
+                    departamento, codigo_producto, tipo_ifi, nombre_ifi,
+                    categoria_plazo
+                """
+            )
+        )
+        total = conn.execute(text("SELECT COUNT(*) FROM agg_colocaciones")).scalar_one()
+    print(f"[LOAD] Agregados refrescados: {total:,} filas en agg_colocaciones")
+
+
+def ensure_performance_indexes() -> None:
+    """Crea indices de filtro si aun no existen (idempotente)."""
+    statements = [
+        ("dim_tiempo", "idx_dim_tiempo_anio", "anio"),
+        ("dim_geografia", "idx_dim_geo_depto", "departamento"),
+        ("dim_producto", "idx_dim_producto_codigo", "codigo_producto"),
+        ("dim_ifi", "idx_dim_ifi_tipo", "tipo_ifi"),
+    ]
+    with get_engine().begin() as conn:
+        for table, index_name, column in statements:
+            exists = conn.execute(
+                text(
+                    """
+                    SELECT COUNT(*)
+                    FROM information_schema.statistics
+                    WHERE table_schema = DATABASE()
+                      AND table_name = :table_name
+                      AND index_name = :index_name
+                    """
+                ),
+                {"table_name": table, "index_name": index_name},
+            ).scalar_one()
+            if not exists:
+                conn.execute(
+                    text(f"CREATE INDEX {index_name} ON {table} ({column})")
+                )
+                print(f"[LOAD] Indice creado: {index_name}")
 
 
 def record_execution(

@@ -338,7 +338,7 @@ function phase(slide, number, name, detail, x, y, color) {
   s.background.fill = C.white;
   title(s, "Código", "Responsabilidad de los módulos Python", 6);
   const modules = [
-    ["conexion.py", "Configuración", ".env, rutas y motores SQLAlchemy", C.cyan],
+    ["config/conexion.py", "Configuración", ".env, rutas y motores SQLAlchemy", C.cyan],
     ["setup_database.py", "Implementación", "Crea la base y ejecuta los scripts SQL", C.orange],
     ["extract.py", "Extract", "Lee el CSV y valida su estructura", C.blue],
     ["transform.py", "Transform", "Limpia, convierte, valida y genera el hash", "#8C6FE8"],

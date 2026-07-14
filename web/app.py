@@ -22,6 +22,7 @@ service = DashboardService()
 
 def _request_filters() -> dict[str, str]:
     return {
+        "anio": request.args.get("anio", "").strip(),
         "departamento": request.args.get("departamento", "").strip(),
         "producto": request.args.get("producto", "").strip(),
         "tipo_ifi": request.args.get("tipo_ifi", "").strip(),
@@ -38,18 +39,40 @@ def proyecto():
     return render_template("proyecto.html")
 
 
+@app.get("/diccionario")
+def diccionario():
+    return render_template("diccionario.html")
+
+
 @app.get("/api/health")
 def health():
     try:
         service.check_connection()
-        return jsonify({"status": "ok", "database": "connected"})
+        meta = service.get_meta()
+        return jsonify({"status": "ok", "database": "connected", "meta": meta})
     except SQLAlchemyError:
         return jsonify({"status": "error", "database": "disconnected"}), 503
+
+
+@app.get("/api/meta")
+def meta():
+    return jsonify(service.get_meta())
 
 
 @app.get("/api/filtros")
 def filters():
     return jsonify(service.get_filters())
+
+
+@app.get("/api/diccionario")
+def api_diccionario():
+    try:
+        return jsonify(service.get_dictionary())
+    except FileNotFoundError as error:
+        return jsonify({"error": str(error)}), 404
+    except Exception as error:
+        app.logger.exception("Error al leer diccionario", exc_info=error)
+        return jsonify({"error": "No se pudo leer el diccionario de datos."}), 500
 
 
 @app.get("/api/dashboard")
@@ -85,6 +108,9 @@ def export_dashboard():
     with pd.ExcelWriter(mem, engine="openpyxl") as writer:
         pd.DataFrame(payload["resumen"]).to_excel(
             writer, sheet_name="Resumen_KPI", index=False
+        )
+        pd.DataFrame(payload["anual"]).to_excel(
+            writer, sheet_name="Anual", index=False
         )
         pd.DataFrame(payload["mensual"]).to_excel(
             writer, sheet_name="Mensual", index=False

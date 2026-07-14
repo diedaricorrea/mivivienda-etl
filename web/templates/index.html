@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BI Mivivienda 2024</title>
+    <title>BI Mivivienda · Colocaciones multi-anio</title>
     <script>
         (function () {
             const saved = localStorage.getItem("mivivienda-theme");
@@ -41,7 +41,7 @@
                     </button>
                     <div class="header-badge">
                         <span>Periodo</span>
-                        <strong>Ene - Dic 2024</strong>
+                        <strong id="period-badge">Cargando...</strong>
                     </div>
                 </div>
             </header>
@@ -102,18 +102,18 @@
                         </article>
                         <article class="kpi-tile kpi-mint">
                             <strong id="kpi-crecimiento" class="kpi-value">--</strong>
-                            <span class="kpi-label">Crecimiento mensual</span>
-                            <span id="kpi-crecimiento-note" class="kpi-note">Vs mes anterior</span>
+                            <span class="kpi-label">Crecimiento periodo</span>
+                            <span id="kpi-crecimiento-note" class="kpi-note">Vs periodo anterior</span>
                         </article>
                         <article class="kpi-tile kpi-orange">
                             <strong id="kpi-mejor-mes" class="kpi-value">--</strong>
-                            <span class="kpi-label">Mejor mes</span>
+                            <span class="kpi-label">Mejor periodo</span>
                             <span id="kpi-mejor-mes-note" class="kpi-note">Mayor colocacion</span>
                         </article>
                         <article class="kpi-tile kpi-sky">
                             <strong id="kpi-nmiv" class="kpi-value">--</strong>
-                            <span class="kpi-label">Participacion NMIV</span>
-                            <span class="kpi-note">Sobre monto total</span>
+                            <span class="kpi-label">Nuevo credito Mivivienda</span>
+                            <span class="kpi-note">NMIV / NCMV sobre monto</span>
                         </article>
                         <article class="kpi-tile kpi-rose">
                             <strong id="kpi-lima" class="kpi-value">--</strong>
@@ -140,8 +140,19 @@
                 <article class="panel">
                     <div class="panel-header">
                         <div>
+                            <h2>Evolucion anual</h2>
+                            <p class="panel-sub">Monto y cantidad por anio</p>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-mid">
+                        <canvas id="annual-chart"></canvas>
+                    </div>
+                </article>
+                <article class="panel">
+                    <div class="panel-header">
+                        <div>
                             <h2>Tendencia mensual</h2>
-                            <p class="panel-sub">Monto y cantidad</p>
+                            <p class="panel-sub">Serie anio-mes (sin mezclar eneros)</p>
                         </div>
                     </div>
                     <div class="chart-container chart-mid">
@@ -186,7 +197,7 @@
                         <div>
                             <span class="stat-dot mint"></span>
                             <div>
-                                <small>Producto NMIV</small>
+                                <small>Producto NMIV/NCMV</small>
                                 <strong id="kpi-nmiv-footer">--</strong>
                             </div>
                         </div>
@@ -279,6 +290,7 @@
                             <tr>
                                 <th>#</th>
                                 <th>Fecha</th>
+                                <th>Anio</th>
                                 <th>Producto</th>
                                 <th>Departamento</th>
                                 <th>Distrito</th>

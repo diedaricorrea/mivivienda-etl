@@ -6,6 +6,7 @@ let latestDashboard = null;
 let latestMapRows = [];
 let detailPage = 1;
 const DETAIL_PAGE_SIZE = 50;
+const FILTER_IDS = ["anio", "departamento", "producto", "tipo_ifi"];
 
 const currency = new Intl.NumberFormat("es-PE", {
     style: "currency",
@@ -23,6 +24,7 @@ const percent = new Intl.NumberFormat("es-PE", {
 document.addEventListener("DOMContentLoaded", async () => {
     initTheme();
     bindEvents();
+    initSidebarNav();
     await checkHealth();
     await loadFilters();
     await loadDashboard();
@@ -66,7 +68,7 @@ function themeColors() {
 
 function initTheme() {
     syncThemeLabel();
-    document.querySelector("#theme-toggle").addEventListener("click", async () => {
+    document.querySelector("#theme-toggle")?.addEventListener("click", async () => {
         const next = currentTheme() === "dark" ? "light" : "dark";
         document.documentElement.setAttribute("data-theme", next);
         localStorage.setItem("mivivienda-theme", next);
@@ -86,7 +88,9 @@ function currentTheme() {
 
 function syncThemeLabel() {
     const label = document.querySelector("#theme-toggle-label");
-    label.textContent = currentTheme() === "dark" ? "Modo claro" : "Modo oscuro";
+    if (label) {
+        label.textContent = currentTheme() === "dark" ? "Modo claro" : "Modo oscuro";
+    }
 }
 
 function setText(id, value) {
@@ -105,11 +109,21 @@ function bindEvents() {
         });
 
     document.querySelector("#clear-filters")?.addEventListener("click", () => {
-        ["departamento", "producto", "tipo_ifi"].forEach((id) => {
-            document.querySelector(`#${id}`).value = "";
+        FILTER_IDS.forEach((id) => {
+            const el = document.querySelector(`#${id}`);
+            if (el) {
+                el.value = "";
+            }
         });
         detailPage = 1;
         loadDashboard();
+    });
+
+    FILTER_IDS.forEach((id) => {
+        document.querySelector(`#${id}`)?.addEventListener("change", () => {
+            detailPage = 1;
+            loadDashboard();
+        });
     });
 
     document.querySelector("#detalle-prev")?.addEventListener("click", () => {
@@ -128,6 +142,51 @@ function bindEvents() {
     });
 
     bindExportMenu();
+}
+
+function initSidebarNav() {
+    const links = [...document.querySelectorAll(".nav-item[data-section]")];
+    if (!links.length) {
+        return;
+    }
+
+    const sections = links
+        .map((link) => document.querySelector(`#${link.dataset.section}`))
+        .filter(Boolean);
+
+    links.forEach((link) => {
+        link.addEventListener("click", (event) => {
+            const target = document.querySelector(link.getAttribute("href"));
+            if (!target) {
+                return;
+            }
+            event.preventDefault();
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+            links.forEach((item) => item.classList.remove("active"));
+            link.classList.add("active");
+        });
+    });
+
+    const observer = new IntersectionObserver(
+        (entries) => {
+            const visible = entries
+                .filter((entry) => entry.isIntersecting)
+                .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+            if (!visible) {
+                return;
+            }
+            const id = visible.target.id;
+            links.forEach((link) => {
+                link.classList.toggle("active", link.dataset.section === id);
+            });
+        },
+        {
+            rootMargin: "-20% 0px -55% 0px",
+            threshold: [0.15, 0.35, 0.6],
+        },
+    );
+
+    sections.forEach((section) => observer.observe(section));
 }
 
 function bindExportMenu() {
@@ -166,7 +225,7 @@ function bindExportMenu() {
 
 function currentFilterParams() {
     const params = new URLSearchParams();
-    ["departamento", "producto", "tipo_ifi"].forEach((id) => {
+    FILTER_IDS.forEach((id) => {
         const value = document.querySelector(`#${id}`)?.value;
         if (value) {
             params.set(id, value);
@@ -186,16 +245,44 @@ function downloadExport(formato) {
     link.remove();
 }
 
+function updateMeta(meta = {}) {
+    const periodo = meta.periodo || "Sin datos";
+    const total = integer.format(meta.total_creditos || 0);
+    setText("meta-fuente", meta.fuente || "DataMart Mivivienda");
+    setText("meta-periodo", `${periodo} · ${total} creditos`);
+    setText("period-badge", periodo);
+
+    const anioSelect = document.querySelector("#anio");
+    if (anioSelect && meta.anios?.length) {
+        const current = anioSelect.value;
+        const placeholder = anioSelect.querySelector("option[value='']");
+        if (placeholder) {
+            const min = meta.anio_min;
+            const max = meta.anio_max;
+            placeholder.textContent = min && max && min !== max
+                ? `Todos (${min}-${max})`
+                : "Todos";
+        }
+        if (current && !meta.anios.map(String).includes(current)) {
+            anioSelect.value = "";
+        }
+    }
+}
+
 async function checkHealth() {
     try {
         const response = await fetch("/api/health");
         if (!response.ok) {
             throw new Error("MySQL no disponible");
         }
-        document.querySelector("#status-dot").classList.add("connected");
-        document.querySelector("#status-text").textContent = "MySQL conectado";
+        const payload = await response.json();
+        document.querySelector("#status-dot")?.classList.add("connected");
+        setText("status-text", "MySQL conectado");
+        if (payload.meta) {
+            updateMeta(payload.meta);
+        }
     } catch (error) {
-        document.querySelector("#status-text").textContent = "Sin conexion";
+        setText("status-text", "Sin conexion");
         showError(error.message);
     }
 }
@@ -207,9 +294,13 @@ async function loadFilters() {
             throw new Error("No se pudieron cargar los filtros");
         }
         const data = await response.json();
+        populateSelect("anio", data.anios || []);
         populateSelect("departamento", data.departamentos);
         populateSelect("producto", data.productos);
         populateSelect("tipo_ifi", data.tipos_ifi);
+        if (data.meta) {
+            updateMeta(data.meta);
+        }
     } catch (error) {
         showError(error.message);
     }
@@ -217,6 +308,9 @@ async function loadFilters() {
 
 function populateSelect(id, values) {
     const select = document.querySelector(`#${id}`);
+    if (!select) {
+        return;
+    }
     values.forEach((value) => {
         const option = document.createElement("option");
         option.value = value;
@@ -228,13 +322,7 @@ function populateSelect(id, values) {
 async function loadDashboard(options = {}) {
     setLoading(true);
     try {
-        const params = new URLSearchParams();
-        ["departamento", "producto", "tipo_ifi"].forEach((id) => {
-            const value = document.querySelector(`#${id}`).value;
-            if (value) {
-                params.set(id, value);
-            }
-        });
+        const params = currentFilterParams();
         params.set("page", String(detailPage));
         params.set("page_size", String(DETAIL_PAGE_SIZE));
 
@@ -247,6 +335,12 @@ async function loadDashboard(options = {}) {
         latestMapRows = data.mapa || [];
         if (data.detalle_meta?.page) {
             detailPage = data.detalle_meta.page;
+        }
+        if (data.meta) {
+            updateMeta(data.meta);
+        }
+        if (data.filtros_aplicados?.anio) {
+            setText("period-badge", String(data.filtros_aplicados.anio));
         }
         updateKpis(data.kpis);
         updateCharts(data);
@@ -281,14 +375,14 @@ function updateKpis(kpis) {
 
     if (kpis.crecimiento_mensual_pct === null || kpis.crecimiento_mensual_pct === undefined) {
         growthEl.textContent = "N/D";
-        growthNote.textContent = "Sin mes comparable";
+        growthNote.textContent = "Sin periodo comparable";
     } else {
         growthEl.textContent = `${percent.format(kpis.crecimiento_mensual_pct)}%`;
         growthEl.classList.add(
             kpis.crecimiento_mensual_pct >= 0 ? "positive" : "negative",
         );
         growthNote.textContent =
-            `${kpis.mes_actual || "Mes actual"} vs ${kpis.mes_anterior || "anterior"}`;
+            `${kpis.mes_actual || "Actual"} vs ${kpis.mes_anterior || "anterior"}`;
     }
 
     document.querySelector("#kpi-mejor-mes").textContent =
@@ -307,6 +401,7 @@ function updateKpis(kpis) {
 
 function updateCharts(data) {
     const colors = themeColors();
+    renderAnnualChart(data.anual || [], colors);
     renderMonthlyChart(data.mensual, colors);
     renderQuarterChart(data.trimestres, colors);
     renderConcentrationChart(data.concentracion, colors);
@@ -338,24 +433,17 @@ function baseChartOptions(colors, extra = {}) {
     };
 }
 
-function renderMonthlyChart(rows, colors) {
-    const maxMonto = Math.max(...rows.map((item) => item.monto_total || 0), 1);
-    const highlightIndex = rows.findIndex(
-        (item) => item.monto_total === maxMonto,
-    );
-
-    renderChart("monthly", "monthly-chart", {
+function renderAnnualChart(rows, colors) {
+    renderChart("annual", "annual-chart", {
         type: "bar",
         data: {
-            labels: rows.map((item) => item.mes_nombre),
+            labels: rows.map((item) => String(item.anio)),
             datasets: [
                 {
                     type: "bar",
                     label: "Monto colocado",
                     data: rows.map((item) => item.monto_total),
-                    backgroundColor: rows.map((_, index) =>
-                        index === highlightIndex ? colors.copper : colors.primary,
-                    ),
+                    backgroundColor: colors.primary,
                     borderRadius: 8,
                     yAxisID: "y",
                     order: 2,
@@ -367,8 +455,8 @@ function renderMonthlyChart(rows, colors) {
                     borderColor: colors.coral,
                     backgroundColor: colors.coral,
                     borderWidth: 2.5,
-                    tension: 0.35,
-                    pointRadius: 3,
+                    tension: 0.3,
+                    pointRadius: 4,
                     pointBackgroundColor: colors.surface,
                     pointBorderColor: colors.coral,
                     pointBorderWidth: 2,
@@ -407,10 +495,95 @@ function renderMonthlyChart(rows, colors) {
                         color: colors.text,
                         callback: (value) => compactMoney(value),
                     },
-                    title: {
-                        display: true,
-                        text: "Monto (S/)",
-                        color: colors.primary,
+                },
+                y1: {
+                    position: "right",
+                    grid: { drawOnChartArea: false },
+                    ticks: {
+                        color: colors.text,
+                        callback: (value) => integer.format(value),
+                    },
+                },
+            },
+        }),
+    });
+}
+
+function renderMonthlyChart(rows, colors) {
+    const maxMonto = Math.max(...rows.map((item) => item.monto_total || 0), 1);
+    const highlightIndex = rows.findIndex(
+        (item) => item.monto_total === maxMonto,
+    );
+    const labels = rows.map((item) => item.periodo || item.mes_nombre);
+
+    renderChart("monthly", "monthly-chart", {
+        type: "bar",
+        data: {
+            labels,
+            datasets: [
+                {
+                    type: "bar",
+                    label: "Monto colocado",
+                    data: rows.map((item) => item.monto_total),
+                    backgroundColor: rows.map((_, index) =>
+                        index === highlightIndex ? colors.copper : colors.primary,
+                    ),
+                    borderRadius: 6,
+                    yAxisID: "y",
+                    order: 2,
+                },
+                {
+                    type: "line",
+                    label: "Cantidad de creditos",
+                    data: rows.map((item) => item.cantidad),
+                    borderColor: colors.coral,
+                    backgroundColor: colors.coral,
+                    borderWidth: 2,
+                    tension: 0.25,
+                    pointRadius: labels.length > 24 ? 0 : 2,
+                    pointBackgroundColor: colors.surface,
+                    pointBorderColor: colors.coral,
+                    pointBorderWidth: 2,
+                    yAxisID: "y1",
+                    order: 1,
+                },
+            ],
+        },
+        options: baseChartOptions(colors, {
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+                legend: {
+                    position: "top",
+                    labels: { usePointStyle: true, boxWidth: 8, color: colors.text },
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => {
+                            if (context.dataset.yAxisID === "y1") {
+                                return `${context.dataset.label}: ${integer.format(context.raw)}`;
+                            }
+                            return `${context.dataset.label}: ${currency.format(context.raw)}`;
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        color: colors.text,
+                        maxRotation: 60,
+                        minRotation: labels.length > 18 ? 45 : 0,
+                        autoSkip: true,
+                        maxTicksLimit: 18,
+                    },
+                },
+                y: {
+                    position: "left",
+                    grid: { color: colors.grid },
+                    ticks: {
+                        color: colors.text,
+                        callback: (value) => compactMoney(value),
                     },
                 },
                 y1: {
@@ -420,11 +593,6 @@ function renderMonthlyChart(rows, colors) {
                         color: colors.text,
                         callback: (value) => integer.format(value),
                     },
-                    title: {
-                        display: true,
-                        text: "Creditos",
-                        color: colors.coral,
-                    },
                 },
             },
         }),
@@ -433,11 +601,14 @@ function renderMonthlyChart(rows, colors) {
 
 function renderQuarterChart(rows, colors) {
     const maxMonto = Math.max(...rows.map((item) => item.monto_total || 0), 1);
+    const labels = rows.map((item) =>
+        item.anio ? `${item.anio}-T${item.trimestre}` : `T${item.trimestre}`,
+    );
 
     renderChart("quarter", "quarter-chart", {
         type: "bar",
         data: {
-            labels: rows.map((item) => `T${item.trimestre}`),
+            labels,
             datasets: [{
                 label: "Monto total",
                 data: rows.map((item) => item.monto_total),
@@ -464,7 +635,12 @@ function renderQuarterChart(rows, colors) {
             scales: {
                 x: {
                     grid: { display: false },
-                    ticks: { color: colors.text },
+                    ticks: {
+                        color: colors.text,
+                        maxRotation: 45,
+                        autoSkip: true,
+                        maxTicksLimit: 16,
+                    },
                 },
                 y: {
                     grid: { color: colors.grid },
@@ -563,11 +739,6 @@ function renderProductChart(rows, colors) {
                         color: colors.text,
                         callback: (value) => compactMoney(value),
                     },
-                    title: {
-                        display: true,
-                        text: "Monto",
-                        color: colors.primary,
-                    },
                 },
                 y1: {
                     position: "right",
@@ -575,11 +746,6 @@ function renderProductChart(rows, colors) {
                     ticks: {
                         color: colors.text,
                         callback: (value) => compactMoney(value),
-                    },
-                    title: {
-                        display: true,
-                        text: "Ticket",
-                        color: colors.mint,
                     },
                 },
             },
@@ -683,11 +849,6 @@ function renderRateChart(rows, colors) {
                     ticks: {
                         color: colors.text,
                         callback: (value) => `${value}%`,
-                    },
-                    title: {
-                        display: true,
-                        text: "Tasa promedio anual",
-                        color: colors.text,
                     },
                 },
             },
@@ -855,10 +1016,14 @@ function chartOptions(horizontal, colors) {
 }
 
 function renderChart(key, canvasId, config) {
+    const canvas = document.querySelector(`#${canvasId}`);
+    if (!canvas) {
+        return;
+    }
     if (charts[key]) {
         charts[key].destroy();
     }
-    charts[key] = new Chart(document.querySelector(`#${canvasId}`), config);
+    charts[key] = new Chart(canvas, config);
 }
 
 function updateTable(rows, meta = {}) {
@@ -896,7 +1061,7 @@ function updateTable(rows, meta = {}) {
     if (!rows.length) {
         body.innerHTML = `
             <tr>
-                <td colspan="9">No existen registros para estos filtros.</td>
+                <td colspan="10">No existen registros para estos filtros.</td>
             </tr>
         `;
         return;
@@ -907,6 +1072,7 @@ function updateTable(rows, meta = {}) {
         tr.innerHTML = `
             <td>${startIndex + index + 1}</td>
             <td>${escapeHtml(row.fecha_desembolso)}</td>
+            <td>${escapeHtml(row.anio)}</td>
             <td>${escapeHtml(row.codigo_producto)}</td>
             <td>${escapeHtml(row.departamento)}</td>
             <td>${escapeHtml(row.distrito)}</td>
@@ -935,11 +1101,14 @@ function escapeHtml(value) {
 function setLoading(visible) {
     document
         .querySelector("#loading")
-        .classList.toggle("visible", visible);
+        ?.classList.toggle("visible", visible);
 }
 
 function showError(message) {
     const toast = document.querySelector("#error-toast");
+    if (!toast) {
+        return;
+    }
     toast.textContent = message;
     toast.classList.add("visible");
     window.setTimeout(() => toast.classList.remove("visible"), 4500);

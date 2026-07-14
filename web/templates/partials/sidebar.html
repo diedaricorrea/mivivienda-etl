@@ -1,4 +1,4 @@
-<aside class="sidebar">
+<aside class="sidebar" id="app-sidebar">
     <div class="brand">
         <div class="brand-mark" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -6,36 +6,39 @@
                 <path d="M12 12v10M4 8.5l8 3.5 8-3.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
             </svg>
         </div>
-        <strong>Mivivienda</strong>
+        <div>
+            <strong>Mivivienda</strong>
+            <small class="brand-sub">Datamart BI</small>
+        </div>
     </div>
 
     <nav class="nav-list" aria-label="Navegacion principal">
         {% if active_page == 'dashboard' %}
-        <a class="nav-item active" href="#resumen">
+        <a class="nav-item active" href="#resumen" data-section="resumen">
             <span class="nav-icon" aria-hidden="true">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
             </span>
             Resumen
         </a>
-        <a class="nav-item" href="#tendencias">
+        <a class="nav-item" href="#tendencias" data-section="tendencias">
             <span class="nav-icon" aria-hidden="true">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 19h16M6 16l4-5 3 3 5-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </span>
             Tendencias
         </a>
-        <a class="nav-item" href="#mapa">
+        <a class="nav-item" href="#mapa" data-section="mapa">
             <span class="nav-icon" aria-hidden="true">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 4.5 3 7v12.5l6-2.5 6 2.5 6-2.5V4.5L15 7 9 4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 4.5V17M15 7v12.5" stroke="currentColor" stroke-width="1.8"/></svg>
             </span>
             Mapa
         </a>
-        <a class="nav-item" href="#analisis">
+        <a class="nav-item" href="#analisis" data-section="analisis">
             <span class="nav-icon" aria-hidden="true">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 19V9M12 19V5M19 19v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             </span>
             Analisis
         </a>
-        <a class="nav-item" href="#detalle">
+        <a class="nav-item" href="#detalle" data-section="detalle">
             <span class="nav-icon" aria-hidden="true">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M7 7h10M7 12h10M7 17h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="3.5" y="3.5" width="17" height="17" rx="3" stroke="currentColor" stroke-width="1.8"/></svg>
             </span>
@@ -49,6 +52,12 @@
             Dashboard
         </a>
         {% endif %}
+        <a class="nav-item{% if active_page == 'diccionario' %} active{% endif %}" href="{{ url_for('diccionario') }}">
+            <span class="nav-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6.5 5.5h11v13h-11z" stroke="currentColor" stroke-width="1.8"/><path d="M9 9h6M9 12.5h6M9 16h3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </span>
+            Diccionario
+        </a>
         <a class="nav-item{% if active_page == 'proyecto' %} active{% endif %}" href="{{ url_for('proyecto') }}">
             <span class="nav-icon" aria-hidden="true">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.25" stroke="currentColor" stroke-width="1.8"/><path d="M12 10.5V16.5M12 7.75v.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -65,6 +74,13 @@
                 Limpiar
             </button>
         </div>
+
+        <label>
+            Anio
+            <select id="anio">
+                <option value="">Todos (2018-2024)</option>
+            </select>
+        </label>
 
         <label>
             Departamento
@@ -96,8 +112,8 @@
     <div class="sidebar-footer">
         <div class="sidebar-meta">
             <span class="meta-label">Fuente</span>
-            <strong>DataMart 2024</strong>
-            <p>Modelo estrella · 9,336 creditos</p>
+            <strong id="meta-fuente">DataMart Mivivienda</strong>
+            <p id="meta-periodo">Cargando cobertura...</p>
         </div>
         <div class="database-status">
             <span id="status-dot" class="status-dot{% if active_page != 'dashboard' %} connected{% endif %}"></span>

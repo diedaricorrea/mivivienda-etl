@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from etl.conexion import get_engine
+from config.conexion import get_engine
 
 
 OUTPUT = ROOT / "docs" / "AVANCE INTEGRADO 01 Y 02 - FORMATO APA 7.docx"
@@ -935,7 +935,7 @@ def build():
         doc, 18, "Archivos y responsabilidades",
         ["Archivo", "Responsabilidad"],
         [
-            ("etl/conexion.py", "Configuración y conexiones MySQL."),
+            ("config/conexion.py", "Configuración y conexiones MySQL."),
             ("etl/setup_database.py", "Creación automática de la base."),
             ("etl/extract.py", "Lectura y validación del CSV."),
             ("etl/transform.py", "Limpieza, conversión, reglas y hash."),

@@ -103,7 +103,7 @@ def transform(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, int]]:
     ]
     valid_mask = data[required].notna().all(axis=1)
     valid_mask &= data["UBIGEO"].str.fullmatch(r"\d{6}", na=False)
-    valid_mask &= data["FECHA_DESEMBOLSO"].dt.year.eq(2024)
+    valid_mask &= data["FECHA_DESEMBOLSO"].notna()
     valid_mask &= data["MONTO_CREDITO"].gt(0)
     valid_mask &= data["MONTO_CUOTA_INICIAL"].fillna(0).ge(0)
     valid_mask &= data["MONTO_VALOR_VIVIENDA"].gt(0)

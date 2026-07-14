@@ -45,6 +45,7 @@ class WebApiTests(unittest.TestCase):
         self.assertIn("crecimiento_mensual_pct", payload["kpis"])
         self.assertIn("concentracion_lima_pct", payload["kpis"])
         self.assertTrue(payload["mensual"])
+        self.assertTrue(payload["anual"])
         self.assertTrue(payload["trimestres"])
         self.assertTrue(payload["plazos"])
         self.assertTrue(payload["tasas"])
@@ -67,6 +68,26 @@ class WebApiTests(unittest.TestCase):
             payload["concentracion"][0]["nombre"],
             "LIMA",
         )
+
+    def test_dictionary_page_and_api(self):
+        page = self.client.get("/diccionario")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn(b"Diccionario de datos", page.data)
+
+        response = self.client.get("/api/diccionario")
+        payload = response.get_json()
+        self.assertEqual(response.status_code, 200)
+        self.assertGreater(payload["total_campos"], 10)
+        self.assertTrue(
+            any(row["variable"] == "FECHA_DESEMBOLSO" for row in payload["campos"])
+        )
+
+    def test_filters_include_years(self):
+        response = self.client.get("/api/filtros")
+        payload = response.get_json()
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("anios", payload)
+        self.assertIn("meta", payload)
 
     def test_export_excel_download(self):
         response = self.client.get("/api/export?formato=xlsx&departamento=LIMA")

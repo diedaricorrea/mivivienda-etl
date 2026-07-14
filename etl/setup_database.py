@@ -3,13 +3,14 @@ from pathlib import Path
 
 from sqlalchemy import text
 
-from .conexion import DB_NAME, get_engine, get_server_engine
+from config.conexion import DB_NAME, get_engine, get_server_engine
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SQL_FILES = [
     PROJECT_ROOT / "sql" / "01_staging.sql",
     PROJECT_ROOT / "sql" / "02_datamart.sql",
+    PROJECT_ROOT / "sql" / "05_rendimiento.sql",
 ]
 
 

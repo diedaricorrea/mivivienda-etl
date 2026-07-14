@@ -53,11 +53,12 @@ Explicar el resultado:
 
 ## 5. Explicacion del codigo Python
 
-### 5.1 `etl/conexion.py`
+### 5.1 `config/conexion.py`
 
 > Este archivo centraliza la configuracion de acceso a MySQL y la ruta del
-> archivo CSV. Lee las variables de entorno desde `.env`, por lo que las
-> credenciales no se escriben directamente en el codigo.
+> archivo CSV. Vive fuera de `etl/` para que el dashboard y los scripts tambien
+> puedan usarlo sin acoplarse al pipeline. Lee las variables de entorno desde
+> `.env`, por lo que las credenciales no se escriben directamente en el codigo.
 
 Elementos importantes:
 
@@ -370,10 +371,9 @@ Comando:
 ### 5.14 Resumen del flujo entre archivos
 
 ```text
-setup_database.py
-        |
-        v
-conexion.py <------------------------------+
+config/conexion.py <-----------------------+
+        |                                  |
+setup_database.py                          |
         |                                  |
         v                                  |
 extract.py -> transform.py -> load.py      |

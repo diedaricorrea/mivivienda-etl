@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from etl.conexion import get_engine
+from config.conexion import get_engine
 
 
 OUTPUT = ROOT / "docs" / "AVANCE 02 IMPLEMENTACION ETL Y DATAMART.docx"
@@ -908,7 +908,7 @@ updateTable(data.detalle);""",
 
     add_heading(doc, "Anexo A. Explicacion de archivos Python", 1)
     file_rows = [
-        ("etl/conexion.py", "Lee .env y crea conexiones MySQL con SQLAlchemy."),
+        ("config/conexion.py", "Lee .env y crea conexiones MySQL con SQLAlchemy."),
         ("etl/setup_database.py", "Crea la base y ejecuta los scripts DDL."),
         ("etl/extract.py", "Lee el CSV y valida sus 14 columnas."),
         ("etl/transform.py", "Limpia, convierte, valida, deduplica y genera hash."),

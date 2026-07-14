@@ -57,6 +57,31 @@ class TransformTests(unittest.TestCase):
         self.assertEqual(metrics["filas_invalidas"], 1)
 
 
+    def test_transform_accepts_other_years(self):
+        valid = {
+            "FECHA_DESEMBOLSO": "20180104",
+            "PRODUCTO": "NCMV",
+            "DEPARTAMENTO": "LIMA",
+            "PROVINCIA": "LIMA",
+            "DISTRITO": "LIMA",
+            "UBIGEO": "150101",
+            "IFI": "CREDITO",
+            "TIPO_IFI": "BANCO",
+            "MONTO_CREDITO": "29800.00",
+            "MONTO_CUOTA_INICIAL": "5000.00",
+            "PLAZOS": "180",
+            "TASA": "14.50",
+            "MONTO_VALOR_VIVIENDA": "45000.00",
+            "FECHA_CORTE": "20230811",
+        }
+
+        result, metrics = transform(pd.DataFrame([valid]))
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(metrics["filas_invalidas"], 0)
+        self.assertEqual(result.iloc[0]["producto"], "NCMV")
+
+
 if __name__ == "__main__":
     unittest.main()
 
