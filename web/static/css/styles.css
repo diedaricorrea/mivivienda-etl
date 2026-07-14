@@ -1242,6 +1242,47 @@ tbody tr:hover {
     font-weight: 700;
 }
 
+.stack-logo-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0 0 18px;
+}
+
+.stack-logo-card {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    padding: 14px 10px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface-2);
+    text-align: center;
+}
+
+.stack-logo-card img {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+}
+
+.stack-logo-card strong {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.stack-logo-card span {
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+[data-theme="dark"] .stack-logo-card img[alt="Flask"],
+[data-theme="dark"] .stack-logo-card img[alt="SQLAlchemy"] {
+    filter: invert(1) grayscale(1) brightness(1.35);
+}
+
 .row-about,
 .row-about-charts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1497,6 +1538,10 @@ tbody tr:hover {
         grid-template-columns: 1fr;
     }
 
+    .stack-logo-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
     .star-bottom {
         grid-template-columns: 1fr;
     }
@@ -1506,6 +1551,10 @@ tbody tr:hover {
     }
 
     .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .stack-logo-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 

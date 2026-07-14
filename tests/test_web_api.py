@@ -43,6 +43,7 @@ class WebApiTests(unittest.TestCase):
         self.assertIn(b"fact_credito", response.data)
         self.assertIn(b"Modelo estrella del DataMart", response.data)
         self.assertIn(b"Stack tecnologico", response.data)
+        self.assertIn(b"img/stack/python.svg", response.data)
         self.assertIn(b"Conocimientos aplicados", response.data)
         self.assertIn(b"vw_creditos_analitica", response.data)
         self.assertIn(b"Componentes del DataMart", response.data)
